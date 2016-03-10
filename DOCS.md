@@ -34,6 +34,14 @@ $router->get('/', function() {
 $router->run();
 ```
 
+And add this code to the .htaccess file:
+
+```php
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^ index.php [L]
+```
 
 Congratulations! Now, you can use Buki\Router.
 
