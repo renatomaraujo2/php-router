@@ -30,11 +30,12 @@ class Router
 
 	function __construct($params = [])
 	{
-		$this->baseFolder = realpath(__DIR__ . '/../');
+		$this->baseFolder = realpath(__DIR__ . '/../../../../');
 
 		if(is_null($params) || !is_array($params))
 			return;
 
+		$this->baseFolder		 = (isset($params['base']) ? trim($params['base'], '/') : $this->baseFolder);
 		$this->controllersFolder = (isset($params['controllers']) ? $this->baseFolder . '/' . trim($params['controllers'], '/') : null);
 		$this->filtersFolder	 = (isset($params['filters']) ? $this->baseFolder . '/' . trim($params['filters']) : null);
 	}
