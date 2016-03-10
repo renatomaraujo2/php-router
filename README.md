@@ -36,6 +36,8 @@ $router = new \Buki\Router();
 $router->get('/', function() {
     return 'Hello World!';
 });
+
+$router->run();
 ```
 
 ## Docs
