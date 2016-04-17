@@ -253,9 +253,9 @@ class Router
 						{
 							if(strstr($value, '/'))
 								foreach (explode('/', $value) as $k => $v)
-									$newMatched[] = $v;
+									$newMatched[] = trim(urldecode($v));
 							else
-								$newMatched[] = $value;
+								$newMatched[] = trim(urldecode($value));
 						}
 
 						$matched = $newMatched;
@@ -335,11 +335,8 @@ class Router
 				$param_num2 = $r->getNumberOfParameters();
 
 				$value = ($method_name == 'main' ? $route : $route . '/' . $method_name);
-
-				if($param_num2 != $param_num)
-					$this->addRoute(($value . str_repeat('/{u}', $param_num)), 'ANY', ($controller . '#' . $method_name), $settings = null);
-
-				$this->addRoute(($value . str_repeat('/{u}', $param_num2)), 'ANY', ($controller . '#' . $method_name), $settings = null);
+				
+				$this->any(($value . str_repeat('/{a}', $param_num) . str_repeat('/{a?}', $param_num2 - $param_num)), ($controller . '@' . $method_name));
 			}
 		}
 
@@ -421,7 +418,7 @@ class Router
 		if($value == 'AJAX' && isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest' && $value == $method)
 			$valid = true;
 
-		elseif (in_array($value, explode('|', $validMethods)) && $value == $method)
+		elseif (in_array($value, explode('|', $validMethods)) && ($value == $method || $value == 'ANY'))
 			$valid = true;
 
 		return $valid;
