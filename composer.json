@@ -3,7 +3,7 @@
     "type": "library",
     "description": "simple router class for php",
     "keywords": ["php","router","route","simple"],
-    "homepage": "https://github.com/izniburak/router",
+    "homepage": "https://github.com/izniburak/php-router",
     "license": "MIT",
     "authors": [
         {
