@@ -53,7 +53,7 @@ Documentation page: [Buki\Router Docs][doc-url]
 
 ## Contributing
 
-1. Fork it ( https://github.com/izniburak/router/fork )
+1. Fork it ( https://github.com/izniburak/php-router/fork )
 2. Create your feature branch (git checkout -b my-new-feature)
 3. Commit your changes (git commit -am 'Add some feature')
 4. Push to the branch (git push origin my-new-feature)
@@ -64,6 +64,6 @@ Documentation page: [Buki\Router Docs][doc-url]
 - [izniburak](https://github.com/izniburak) İzni Burak Demirtaş - creator, maintainer
 
 [mit-url]: http://opensource.org/licenses/MIT
-[doc-url]: https://github.com/izniburak/router/blob/master/DOCS.md
+[doc-url]: https://github.com/izniburak/php-router/blob/master/DOCS.md
 [author-url]: http://burakdemirtas.org
 [twitter-url]: https://twitter.com/izniburak
