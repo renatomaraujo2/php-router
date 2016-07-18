@@ -5,7 +5,7 @@
 * @ Class: Router
 * @ Author: izni burak demirtas / @izniburak <info@burakdemirtas.org>
 * @ Web: http://burakdemirtas.org
-* @ URL: https://github.com/izniburak/router
+* @ URL: https://github.com/izniburak/php-router
 * @ Licence: The MIT License (MIT) - Copyright (c) - http://opensource.org/licenses/MIT
 *
 */
@@ -35,9 +35,9 @@ class Router
 		if(is_null($params) || !is_array($params))
 			return;
 
-		$this->baseFolder		 = (isset($params['base']) ? trim($params['base'], '/') : $this->baseFolder);
-		$this->controllersFolder = (isset($params['controllers']) ? $this->baseFolder . '/' . trim($params['controllers'], '/') : null);
-		$this->filtersFolder	 = (isset($params['filters']) ? $this->baseFolder . '/' . trim($params['filters']) : null);
+		$this->baseFolder			= (isset($params['base']) ? trim($params['base'], '/') : $this->baseFolder);
+		$this->controllersFolder	= (isset($params['controllers']) ? $this->baseFolder . '/' . trim($params['controllers'], '/') : null);
+		$this->filtersFolder		= (isset($params['filters']) ? $this->baseFolder . '/' . trim($params['filters']) : null);
 	}
 
 	public function __call($method, $params)
@@ -150,10 +150,10 @@ class Router
 					$this->message('Oppps! Error :(', '<b>'. $segments[0] .'</b> filter file is not found. Please, check file.');
 
 				require_once($filterFile);
-				$controller = new $segments[0]();
+				$filter = new $segments[0]();
 
-				if(in_array($segments[1], get_class_methods($controller)))
-					return $controller->$segments[1]();
+				if(in_array($segments[1], get_class_methods($filter)))
+					return $filter->$segments[1]();
 				else
 					$this->message('Oppps! Error :(', '<b>' . $segments[1] . '</b> method is not found in <b>' . $segments[0] . '</b> filter. Please, check file.');
 			}
@@ -365,12 +365,12 @@ class Router
 		$route = str_replace(['///', '//'], '/', $route);
 
 		$data = [
-			'route' => $route,
-			'method' => strtoupper($method),
-			'callback' => $callback,
-			'alias' => (isset($settings['alias']) ? $settings['alias'] : (isset($settings['as']) ? $settings['as'] : null)),
-			'before' => (isset($settings['before']) ? $settings['before'] : null),
-			'after' => (isset($settings['after']) ? $settings['after'] : null)
+			'route'		=> $route,
+			'method'	=> strtoupper($method),
+			'callback'	=> $callback,
+			'alias'		=> (isset($settings['alias']) ? $settings['alias'] : (isset($settings['as']) ? $settings['as'] : null)),
+			'before'	=> (isset($settings['before']) ? $settings['before'] : null),
+			'after'		=> (isset($settings['after']) ? $settings['after'] : null)
 		];
 		array_push($this->routes, $data);
 	}
