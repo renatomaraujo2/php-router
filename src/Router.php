@@ -22,7 +22,7 @@ class Router
 	protected $errorCallback;
 	protected $patterns = [
 		'{a}' => '([^/]+)',
-		'{i}' => '([0-9]+)',
+		'{d}' => '([0-9]+)',
 		'{s}' => '([a-zA-Z]+)',
 		'{u}' => '([a-zA-Z0-9_-]+)',
 		'{*}' => '(.*)'
@@ -111,14 +111,14 @@ class Router
 				if(!in_array('{' . $key . '}', array_keys($this->patterns)))
 					$this->patterns['{' . $key . '}'] = '(' . $value . ')';
 				else
-					$this->message('Opps! Error :(', '<b>' . $key . '</b> filter cannot be changed.');
+					$this->message('Opps! Error :(', '<b>' . $key . '</b> pattern cannot be changed.');
 		}
 		else
 		{
 			if(!in_array('{' . $pattern . '}', array_keys($this->patterns)))
 				$this->patterns['{' . $pattern . '}'] = '(' . $attr . ')';
 			else
-				$this->message('<h2>Opps! Error :(', '<b>' . $pattern . '</b> filter cannot be changed.');
+				$this->message('<h2>Opps! Error :(', '<b>' . $pattern . '</b> pattern cannot be changed.');
 		}
 
 		return;
@@ -324,19 +324,19 @@ class Router
 		if(!class_exists($controller))
 			$req = require_once($controllerFile);
 
-		$class_methods = get_class_methods($controller);
+		$classMethods = get_class_methods($controller);
 
-		foreach ($class_methods as $method_name)
+		foreach ($classMethods as $methodName)
 		{
-			if(!strstr($method_name, '__'))
+			if(!strstr($methodName, '__'))
 			{
-				$r = new \ReflectionMethod($controller, $method_name);
+				$r = new \ReflectionMethod($controller, $methodName);
 				$param_num = $r->getNumberOfRequiredParameters();
 				$param_num2 = $r->getNumberOfParameters();
 
-				$value = ($method_name == 'main' ? $route : $route . '/' . $method_name);
+				$value = ($methodName == 'main' ? $route : $route . '/' . $methodName);
 				
-				$this->any(($value . str_repeat('/{a}', $param_num) . str_repeat('/{a?}', $param_num2 - $param_num)), ($controller . '@' . $method_name));
+				$this->any(($value . str_repeat('/{a}', $param_num) . str_repeat('/{a?}', $param_num2 - $param_num)), ($controller . '@' . $methodName));
 			}
 		}
 
