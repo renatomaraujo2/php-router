@@ -18,26 +18,31 @@ use Buki\Router\RouterException;
 class Router
 {
 	protected $baseFolder;
+
 	protected $routes = [];
 	protected $middlewares = [];
 	protected $groups = [];
+
 	protected $patterns = [
 		'{a}' => '([^/]+)',
-    '{d}' => '([0-9]+)',
-    '{i}' => '([0-9]+)',
-    '{s}' => '([a-zA-Z]+)',
-    '{w}' => '([a-zA-Z0-9_]+)',
-    '{u}' => '([a-zA-Z0-9_-]+)',
-    '{*}' => '(.*)'
+		'{d}' => '([0-9]+)',
+		'{i}' => '([0-9]+)',
+		'{s}' => '([a-zA-Z]+)',
+		'{w}' => '([a-zA-Z0-9_]+)',
+		'{u}' => '([a-zA-Z0-9_-]+)',
+		'{*}' => '(.*)'
 	];
+
 	protected $namespaces = [
-    'middlewares' => '',
-    'controllers' => ''
-  ];
+		'middlewares' => '',
+		'controllers' => ''
+	];
+
   protected $paths = [
-    'controllers' => 'controllers',
-    'middlewares' => 'middlewares'
+    'controllers' => 'Controllers',
+    'middlewares' => 'Middlewares'
   ];
+
 	protected $errorCallback;
 
 	/**
@@ -56,8 +61,8 @@ class Router
 
 		if(isset($params['paths']) && $paths = $params['paths'])
 		{
-			$this->paths['controllers']	= $this->baseFolder . '/' . (isset($paths['controllers']) ? trim($paths['controllers'], '/') : $this->paths['controllers']);
-			$this->paths['middlewares']	= $this->baseFolder . '/' . (isset($paths['middlewares']) ? trim($paths['middlewares'], '/') : $this->paths['middlewares']);
+			$this->paths['controllers']	= (isset($paths['controllers']) ? $this->baseFolder . '/' . trim($paths['controllers'], '/') . '/' : $this->paths['controllers']);
+			$this->paths['middlewares']	= (isset($paths['middlewares']) ? $this->baseFolder . '/' . trim($paths['middlewares'], '/') . '/' : $this->paths['middlewares']);
 		}
 
 		if(isset($params['namespaces']) && $namespaces = $params['namespaces'])
@@ -180,11 +185,16 @@ class Router
   */
 	public function run()
 	{
-		$base = str_replace( $_SERVER['DOCUMENT_ROOT'], '', str_replace('\\', '/', getcwd()) ) . '/';
+		$documentRoot = realpath($_SERVER['DOCUMENT_ROOT']);
+		$getCwd =  realpath(getcwd());
+
+		$base = str_replace('\\', '/', str_replace($documentRoot, '', $getCwd) . '/');
 		$uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 
 		if(($base != $uri) && (substr($uri, -1) == '/'))
 			$uri = substr($uri, 0, (strlen($uri)-1));
+
+		if($uri === '') $uri = '/';
 
 		$method = RouterRequest::getRequestMethod();
 
@@ -394,13 +404,14 @@ class Router
       foreach ($this->groups as $key => $value)
           $group .= $value['route'];
 
-    $route = rtrim(dirname($_SERVER['PHP_SELF']) . $group . '/' . trim($uri, '/'), '/');
+		$page = dirname($_SERVER['PHP_SELF']);
+    $route = rtrim($page . $group . '/' . trim($uri, '/'), '/');
 
-    if($route == dirname($_SERVER['PHP_SELF']))
+    if($route == $page)
       $route .= '/';
 
     $data = [
-      'route' => $route,
+			'route' => $route,
       'method' => strtoupper($method),
       'callback' => (is_object($callback) ? $callback : $this->namespaces['controllers'] . $callback),
       'alias' => (isset($settings['alias']) ? $settings['alias'] : (isset($settings['as']) ? $settings['as'] : null)),
@@ -490,5 +501,4 @@ class Router
 	{
 		return $this->routes;
 	}
-
 }

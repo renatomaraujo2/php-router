@@ -36,10 +36,10 @@ class RouterCommand
 				$parts = explode('/', $command);
 				$segments = explode('@', end($parts));
 
-				$middlewareFile = realpath($path . strtolower(str_replace($namespace, '', $segments[0])) . '.php');
+				$middlewareFile = realpath($path . (str_replace($namespace, '', $segments[0])) . '.php');
 
 				if(count($parts) > 1)
-					$middlewareFile = realpath($path . $parts[0] . '/' . strtolower(str_replace($namespace, '', $segments[0])) .'.php');
+					$middlewareFile = realpath($path . $parts[0] . '/' . (str_replace($namespace, '', $segments[0])) .'.php');
 
 				if(!file_exists($middlewareFile))
           return new RouterException($segments[0] . ' middleware file is not found. Please, check file.');
@@ -76,10 +76,10 @@ class RouterCommand
 			$parts = explode('/', $command);
 			$segments = explode('@', end($parts));
 
-			$controllerFile = realpath($path . strtolower(str_replace($namespace, '', $segments[0])) . '.php');
+			$controllerFile = realpath($path . (str_replace($namespace, '', $segments[0])) . '.php');
 
 			if(count($parts) > 1)
-				$controllerFile = realpath($path . $parts[0] . '/' . strtolower($segments[0]).'.php');
+				$controllerFile = realpath($path . $parts[0] . '/' . ($segments[0]).'.php');
 
 			if(!file_exists($controllerFile))
 				return new RouterException($segments[0] . ' Controller File is not found. Please, check file.');
