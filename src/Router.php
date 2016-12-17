@@ -405,9 +405,18 @@ class Router
           $group .= $value['route'];
 
 		$page = dirname($_SERVER['PHP_SELF']);
-    $route = rtrim($page . $group . '/' . trim($uri, '/'), '/');
+		$page = $page == '/' ? '' : $page;
 
-    if($route == $page)
+		if(strstr($page, 'index.php'))
+		{
+			$data = implode('/', explode('/', $page));
+			$page = str_replace($data, '', $page);
+		}
+
+    $route = $page . $group . '/' . trim($uri, '/');
+		$route = rtrim($route, '/');
+
+		if($route == $page)
       $route .= '/';
 
     $data = [
@@ -453,19 +462,19 @@ class Router
   */
   public function runRouteMiddleware($middleware, $type)
   {
-    if($type == 'before')
+		if($type == 'before')
     {
       if(!is_null($middleware['group']))
-        RouterCommand::beforeAfter($middleware['group'][$type], $this->middlewares);
+        RouterCommand::beforeAfter($middleware['group'][$type], $this->middlewares, $this->paths['middlewares'], $this->namespaces['middlewares']);
 
-      RouterCommand::beforeAfter($middleware[$type], $this->middlewares);
+      RouterCommand::beforeAfter($middleware[$type], $this->middlewares, $this->paths['middlewares'], $this->namespaces['middlewares']);
     }
     else
     {
-      RouterCommand::beforeAfter($middleware[$type], $this->middlewares);
+      RouterCommand::beforeAfter($middleware[$type], $this->middlewares, $this->paths['middlewares'], $this->namespaces['middlewares']);
 
       if(!is_null($middleware['group']))
-        RouterCommand::beforeAfter($middleware['group'][$type], $this->middlewares);
+        RouterCommand::beforeAfter($middleware['group'][$type], $this->middlewares, $this->paths['middlewares'], $this->namespaces['middlewares']);
     }
   }
 

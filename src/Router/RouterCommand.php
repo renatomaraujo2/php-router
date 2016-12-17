@@ -48,7 +48,7 @@ class RouterCommand
 				$controller = new $segments[0]();
 
 				if(in_array($segments[1], get_class_methods($controller)))
-					return $controller->$segments[1]();
+					return call_user_func([$controller, $segments[1]]);
 				else
           return new RouterException($segments[1] . ' method is not found in <b>'.$segments[0].'</b> middleware. Please, check file.');
 			}
