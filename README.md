@@ -1,10 +1,31 @@
 ## Router
-simple router class for php
+```
+  _____  _    _ _____             _____             _            
+ |  __ \| |  | |  __ \           |  __ \           | |           
+ | |__) | |__| | |__) |  ______  | |__) |___  _   _| |_ ___ _ __ 
+ |  ___/|  __  |  ___/  |______| |  _  // _ \| | | | __/ _ \ '__|
+ | |    | |  | | |               | | \ \ (_) | |_| | ||  __/ |   
+ |_|    |_|  |_|_|               |_|  \_\___/ \__,_|\__\___|_|   
+                                                                 
+```
+simple Router class for PHP. with the support of Controllers and Middlewares.
 
 [![Total Downloads](https://poser.pugx.org/izniburak/router/d/total.svg)](https://packagist.org/packages/izniburak/router)
 [![Latest Stable Version](https://poser.pugx.org/izniburak/router/v/stable.svg)](https://packagist.org/packages/izniburak/router)
 [![Latest Unstable Version](https://poser.pugx.org/izniburak/router/v/unstable.svg)](https://packagist.org/packages/izniburak/router)
 [![License](https://poser.pugx.org/izniburak/router/license.svg)](https://packagist.org/packages/izniburak/router)
+
+### Features
+- Static Route Patterns
+- Dynamic Route Patterns
+- Easy-to-use patterns
+- Adding a new pattern supports. (with RegExp)
+- Supports GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD, AJAX and ANY request methods
+- Group Routing
+- Controllers support (Example: HomeController@about)
+- Before and after Route Middlewares support (Example: Auth@isLogin)
+- Custom 404 handling
+- Debug mode (Error message open/close)
 
 ## Install
 
@@ -42,6 +63,10 @@ $router->run();
 
 ## Docs
 Documentation page: [Buki\Router Docs][doc-url]
+
+## ToDo
+- Write Test
+- Write Documentation
 
 ## Support
 [izniburak's homepage][author-url]
