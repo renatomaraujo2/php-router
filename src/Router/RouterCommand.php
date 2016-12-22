@@ -92,7 +92,7 @@ class RouterCommand
 			elseif(is_null($params) && in_array($segments[1], get_class_methods($controller)))
 				echo call_user_func([$controller, $segments[1]]);
 			else
-        return new Exception($segments[1] . ' method is not found in '.$segments[0].' controller. Please, check file.');
+        return new RouterException($segments[1] . ' method is not found in '.$segments[0].' controller. Please, check file.');
 		}
 		else
 			if(!is_null($params))
