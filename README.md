@@ -2,11 +2,11 @@
 ```
   _____  _    _ _____             _____             _            
  |  __ \| |  | |  __ \           |  __ \           | |           
- | |__) | |__| | |__) |  ______  | |__) |___  _   _| |_ ___ _ __ 
+ | |__) | |__| | |__) |  ______  | |__) |___  _   _| |_ ___ _ __
  |  ___/|  __  |  ___/  |______| |  _  // _ \| | | | __/ _ \ '__|
  | |    | |  | | |               | | \ \ (_) | |_| | ||  __/ |   
  |_|    |_|  |_|_|               |_|  \_\___/ \__,_|\__\___|_|   
-                                                                 
+
 ```
 simple Router class for PHP. with the support of Controllers and Middlewares.
 
@@ -16,14 +16,15 @@ simple Router class for PHP. with the support of Controllers and Middlewares.
 [![License](https://poser.pugx.org/izniburak/router/license.svg)](https://packagist.org/packages/izniburak/router)
 
 ### Features
+- Supports GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD, AJAX and ANY request methods
+- Controllers support (Example: HomeController@about)
+- Before and after Route Middlewares support (Example: Auth@isLogin)
 - Static Route Patterns
 - Dynamic Route Patterns
 - Easy-to-use patterns
 - Adding a new pattern supports. (with RegExp)
-- Supports GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD, AJAX and ANY request methods
+- Namespaces supports.
 - Group Routing
-- Controllers support (Example: HomeController@about)
-- Before and after Route Middlewares support (Example: Auth@isLogin)
 - Custom 404 handling
 - Debug mode (Error message open/close)
 
