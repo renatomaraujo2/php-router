@@ -15,6 +15,12 @@ use Buki\Router\RouterException;
 
 class RouterCommand
 {
+
+  public static function exception($message = '')
+  {
+    return new RouterException($message);
+  }
+
   /**
 	* Run Route Middlewares
 	*
@@ -42,7 +48,7 @@ class RouterCommand
 					$middlewareFile = realpath($path . $parts[0] . '/' . (str_replace($namespace, '', $segments[0])) .'.php');
 
 				if(!file_exists($middlewareFile))
-          return new RouterException($segments[0] . ' middleware file is not found. Please, check file.');
+          return self::exception($segments[0] . ' middleware file is not found. Please, check file.');
 
 				require_once($middlewareFile);
 				$controller = new $segments[0]();
@@ -50,7 +56,7 @@ class RouterCommand
 				if(in_array($segments[1], get_class_methods($controller)))
 					return call_user_func([$controller, $segments[1]]);
 				else
-          return new RouterException($segments[1] . ' method is not found in <b>'.$segments[0].'</b> middleware. Please, check file.');
+          return self::exception($segments[1] . ' method is not found in <b>'.$segments[0].'</b> middleware. Please, check file.');
 			}
 			else
 			{
@@ -82,7 +88,7 @@ class RouterCommand
 				$controllerFile = realpath($path . $parts[0] . '/' . ($segments[0]).'.php');
 
 			if(!file_exists($controllerFile))
-				return new RouterException($segments[0] . ' Controller File is not found. Please, check file.');
+				return self::exception($segments[0] . ' Controller File is not found. Please, check file.');
 
 			require_once($controllerFile);
 			$controller = new $segments[0]();
@@ -92,7 +98,7 @@ class RouterCommand
 			elseif(is_null($params) && in_array($segments[1], get_class_methods($controller)))
 				echo call_user_func([$controller, $segments[1]]);
 			else
-        return new RouterException($segments[1] . ' method is not found in '.$segments[0].' controller. Please, check file.');
+        return self::exception($segments[1] . ' method is not found in '.$segments[0].' controller. Please, check file.');
 		}
 		else
 			if(!is_null($params))

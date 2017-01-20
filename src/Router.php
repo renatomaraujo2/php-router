@@ -57,7 +57,8 @@ class Router
 		if(is_null($params) || empty($params) || !is_array($params))
 			return;
 
-		RouterException::$debug = (isset($params['debug']) && $params['debug'] === true ? true : false);
+		if(isset($params['debug']) && is_bool($params['debug']))
+			RouterException::$debug = $params['debug'];
 
 		if(isset($params['paths']) && $paths = $params['paths'])
 		{
@@ -160,19 +161,25 @@ class Router
 				if(!in_array('{' . $key . '}', array_keys($this->patterns)))
 					$this->patterns['{' . $key . '}'] = '(' . $value . ')';
 				else
-					return new RouterException($key . ' pattern cannot be changed.');
+					return $this->exception($key . ' pattern cannot be changed.');
 		}
 		else
 		{
 			if(!in_array('{' . $pattern . '}', array_keys($this->patterns)))
 				$this->patterns['{' . $pattern . '}'] = '(' . $attr . ')';
 			else
-				return new RouterException($pattern . ' pattern cannot be changed.');
+				return $this->exception($pattern . ' pattern cannot be changed.');
 		}
 
 		return;
 	}
 
+
+	/**
+  * Add new middleware
+  *
+  * @return
+  */
 	public function middleware($name, $command)
 	{
 		$this->middlewares[$name] = $command;
@@ -273,7 +280,7 @@ class Router
 				$this->errorCallback = function()
 				{
 					header($_SERVER['SERVER_PROTOCOL']." 404 Not Found");
-					return new RouterException('Bad Request :( Looks like something went wrong. Please try again.');
+					return $this->exception('Route not found. Looks like something went wrong. Please try again.');
 				};
 			}
 
@@ -342,7 +349,7 @@ class Router
 				$req = require($controllerFile);
 		}
 		else
-			return new RouterException($controller . " controller file is not found! Please, check file.");
+			return $this->exception($controller . " controller file is not found! Please, check file.");
 
 		$classMethods = get_class_methods($this->namespaces['controllers'] . $controller);
 
@@ -509,5 +516,15 @@ class Router
 	public function getRoutes()
 	{
 		return $this->routes;
+	}
+
+	/**
+	* Throw new Exception for Router Error
+	*
+	* @return RouterException
+	*/
+	public function exception($message = '')
+	{
+		return new RouterException($message);
 	}
 }
