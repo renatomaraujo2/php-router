@@ -15,8 +15,30 @@ use Buki\Router\RouterException;
 
 class RouterCommand
 {
+  /**
+  * Class instance variable
+  */
+  protected static $instance = null;
 
-  public static function exception($message = '')
+  /**
+  * Get class instance
+  *
+  * @return PdoxObject
+  */
+  public static function getInstance()
+  {
+      if (null === self::$instance)
+          self::$instance = new static();
+
+      return self::$instance;
+  }
+
+  /**
+	* Throw new Exception for Router Error
+	*
+	* @return RouterException
+	*/
+  public function exception($message = '')
   {
     return new RouterException($message);
   }
@@ -26,13 +48,13 @@ class RouterCommand
 	*
 	* @return true | false
 	*/
-	public static function beforeAfter($command, $middleware, $path = '', $namespace = '')
+	public function beforeAfter($command, $middleware, $path = '', $namespace = '')
 	{
 		if(!is_null($command))
 		{
 			if(is_array($command))
 				foreach ($command as $key => $value)
-					self::beforeAfter($value, $middleware);
+					$this->beforeAfter($value, $middleware);
 
 			elseif(is_object($command))
 				return call_user_func($command);
@@ -48,7 +70,7 @@ class RouterCommand
 					$middlewareFile = realpath($path . $parts[0] . '/' . (str_replace($namespace, '', $segments[0])) .'.php');
 
 				if(!file_exists($middlewareFile))
-          return self::exception($segments[0] . ' middleware file is not found. Please, check file.');
+          return $this->exception($segments[0] . ' middleware file is not found. Please, check file.');
 
 				require_once($middlewareFile);
 				$controller = new $segments[0]();
@@ -56,12 +78,12 @@ class RouterCommand
 				if(in_array($segments[1], get_class_methods($controller)))
 					return call_user_func([$controller, $segments[1]]);
 				else
-          return self::exception($segments[1] . ' method is not found in <b>'.$segments[0].'</b> middleware. Please, check file.');
+          return $this->exception($segments[1] . ' method is not found in <b>'.$segments[0].'</b> middleware. Please, check file.');
 			}
 			else
 			{
 				if(!is_null($middleware[$command]) && isset($middleware[$command]))
-					self::beforeAfter($middleware[$command], $middleware);
+					$this->beforeAfter($middleware[$command], $middleware);
 				else
 					return false;
 			}
@@ -75,7 +97,7 @@ class RouterCommand
 	*
 	* @return null
 	*/
-	public static function runRoute($command, $params = null, $path = '', $namespace = '')
+	public function runRoute($command, $params = null, $path = '', $namespace = '')
 	{
 		if(!is_object($command))
 		{
@@ -88,7 +110,7 @@ class RouterCommand
 				$controllerFile = realpath($path . $parts[0] . '/' . ($segments[0]).'.php');
 
 			if(!file_exists($controllerFile))
-				return self::exception($segments[0] . ' Controller File is not found. Please, check file.');
+				return $this->exception($segments[0] . ' Controller File is not found. Please, check file.');
 
 			require_once($controllerFile);
 			$controller = new $segments[0]();
@@ -98,7 +120,7 @@ class RouterCommand
 			elseif(is_null($params) && in_array($segments[1], get_class_methods($controller)))
 				echo call_user_func([$controller, $segments[1]]);
 			else
-        return self::exception($segments[1] . ' method is not found in '.$segments[0].' controller. Please, check file.');
+        return $this->exception($segments[1] . ' method is not found in '.$segments[0].' controller. Please, check file.');
 		}
 		else
 			if(!is_null($params))

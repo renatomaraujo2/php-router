@@ -445,7 +445,7 @@ class Router
 	*/
 	private function beforeAfterCommand($command)
 	{
-		return RouterCommand::beforeAfter(
+		return RouterCommand::getInstance()->beforeAfter(
 			$command, $this->middlewares[$command], $this->paths['middlewares'], $this->namespaces['middlewares']
 		);
 	}
@@ -457,7 +457,7 @@ class Router
 	*/
 	private function runRouteCommand($command, $params = null)
 	{
-		RouterCommand::runRoute(
+		RouterCommand::getInstance()->runRoute(
 			$command, $params, $this->paths['controllers'], $this->namespaces['controllers']
 		);
 	}
@@ -472,16 +472,16 @@ class Router
 		if($type == 'before')
     {
       if(!is_null($middleware['group']))
-        RouterCommand::beforeAfter($middleware['group'][$type], $this->middlewares, $this->paths['middlewares'], $this->namespaces['middlewares']);
+        RouterCommand::getInstance()->beforeAfter($middleware['group'][$type], $this->middlewares, $this->paths['middlewares'], $this->namespaces['middlewares']);
 
-      RouterCommand::beforeAfter($middleware[$type], $this->middlewares, $this->paths['middlewares'], $this->namespaces['middlewares']);
+      RouterCommand::getInstance()->beforeAfter($middleware[$type], $this->middlewares, $this->paths['middlewares'], $this->namespaces['middlewares']);
     }
     else
     {
-      RouterCommand::beforeAfter($middleware[$type], $this->middlewares, $this->paths['middlewares'], $this->namespaces['middlewares']);
+      RouterCommand::getInstance()->beforeAfter($middleware[$type], $this->middlewares, $this->paths['middlewares'], $this->namespaces['middlewares']);
 
       if(!is_null($middleware['group']))
-        RouterCommand::beforeAfter($middleware['group'][$type], $this->middlewares, $this->paths['middlewares'], $this->namespaces['middlewares']);
+        RouterCommand::getInstance()->beforeAfter($middleware['group'][$type], $this->middlewares, $this->paths['middlewares'], $this->namespaces['middlewares']);
     }
   }
 
