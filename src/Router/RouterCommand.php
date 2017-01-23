@@ -73,7 +73,8 @@ class RouterCommand
           return $this->exception($segments[0] . ' middleware file is not found. Please, check file.');
 
 				require_once($middlewareFile);
-				$controller = new $segments[0]();
+				$middlewareClass = $namespace . $segments[0];
+				$controller = new $middlewareClass();
 
 				if(in_array($segments[1], get_class_methods($controller)))
 					return call_user_func([$controller, $segments[1]]);
