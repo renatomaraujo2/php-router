@@ -47,7 +47,7 @@ class RouterRequest
   {
     $valid = false;
 
-    if($value == 'AJAX' && !is_null($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest' && $value == $method)
+    if($value == 'AJAX' && isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest' && $value == $method)
       $valid = true;
     elseif ( in_array($value, explode('|', self::$validMethods)) && ($value == $method || $value == 'ANY') )
       $valid = true;
