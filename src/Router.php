@@ -341,7 +341,7 @@ class Router
 	*/
 	public function controller($route, $controller)
 	{
-		$controllerFile = realpath($this->paths['controllers'] . strtolower($controller) . '.php');
+		$controllerFile = realpath($this->paths['controllers'] . str_replace('\\','/',$controller) . '.php');
 
 		if(file_exists($controllerFile))
 		{

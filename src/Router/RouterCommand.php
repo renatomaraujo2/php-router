@@ -105,7 +105,7 @@ class RouterCommand
 			$parts = explode('/', $command);
 			$segments = explode('@', end($parts));
 
-			$controllerFile = realpath($path . (str_replace($namespace, '', $segments[0])) . '.php');
+			$controllerFile = realpath($path . (str_replace([$namespace, '\\'], ['', '/'], $segments[0])) . '.php');
 
 			if(count($parts) > 1)
 				$controllerFile = realpath($path . $parts[0] . '/' . ($segments[0]).'.php');
