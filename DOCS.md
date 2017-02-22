@@ -5,7 +5,7 @@ composer.json file:
 ```json
 {
     "require": {
-        "izniburak/router": "dev-master"
+        "izniburak/router": "^1"
     }
 }
 ```
@@ -17,7 +17,7 @@ $ composer install
 OR run the following command directly.
 
 ```
-$ composer require izniburak/router:dev-master
+$ composer require izniburak/router
 ```
 
 
