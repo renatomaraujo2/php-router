@@ -74,7 +74,8 @@ class Router
 	}
 
 	/**
-  * Add route method; Get, Post, Put, Patch, Any, Ajax...
+  * Add route method;
+	* Get, Post, Put, Delete, Patch, Any, Ajax...
   *
   * @return
   */
@@ -174,11 +175,10 @@ class Router
 		return;
 	}
 
-
 	/**
   * Add new middleware
   *
-  * @return
+  * @return null
   */
 	public function middleware($name, $command)
 	{
@@ -329,7 +329,7 @@ class Router
 		array_push($this->groups, $group);
 
 		if(is_object($callback))
-			call_user_func($callback);
+			call_user_func_array($callback, [$this]);
 
 		$this->endGroup();
 	}
@@ -533,7 +533,7 @@ class Router
 	*
 	* @return RouterCommand
 	*/
-	public function routerCommand($message = '')
+	public function routerCommand()
 	{
 		return RouterCommand::getInstance();
 	}
