@@ -13,7 +13,7 @@ namespace Buki\Router;
 
 class RouterRequest
 {
-  public static $validMethods = 'GET|POST|PUT|DELETE|HEAD|OPTIONS|PATCH|ANY|AJAX';
+  public static $validMethods = 'GET|POST|PUT|DELETE|HEAD|OPTIONS|PATCH|ANY|AJAX|AJAXP';
 
   /**
   * method status
@@ -48,6 +48,8 @@ class RouterRequest
     $valid = false;
 
     if($value == 'AJAX' && isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest' && $value == $method)
+      $valid = true;
+    elseif($value == 'AJAXP' && isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest' && $method == 'POST')
       $valid = true;
     elseif ( in_array($value, explode('|', self::$validMethods)) && ($value == $method || $value == 'ANY') )
       $valid = true;
