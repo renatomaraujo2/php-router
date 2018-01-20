@@ -349,7 +349,10 @@ class Router
      */
     public function controller($route, $controller)
     {
-        $controllerFile = realpath($this->paths['controllers'] . str_replace('\\','/',$controller) . '.php');
+        $controller = str_replace(['\\', '.'], '/', $controller);
+        $controllerFile = realpath(
+            $this->paths['controllers'] . $controller . '.php'
+        );
         if(file_exists($controllerFile)) {
             if(!class_exists($controller)) {
                 $req = require($controllerFile);
@@ -358,6 +361,7 @@ class Router
             return $this->exception($controller . " controller file is not found! Please, check file.");
         }
 
+        $controller = str_replace('/', '\\', $controller);
         $classMethods = get_class_methods($this->namespaces['controllers'] . $controller);
         if($classMethods) {
             foreach ($classMethods as $methodName) {
