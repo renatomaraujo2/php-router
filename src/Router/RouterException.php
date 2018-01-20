@@ -15,18 +15,19 @@ use Exception;
 
 class RouterException
 {
-  public static $debug = false;
+    public static $debug = false;
 
-  /**
-  * Create Exception Class.
-  *
-  * @return string | Exception
-  */
-  public function __construct($message)
-  {
-    if(self::$debug)
-      throw new Exception($message, 1);
-    else
-      die('<h2>Opps! An error occurred.</h2> ' . $message);
-  }
+    /**
+     * Create Exception Class.
+     *
+     * @return string | Exception
+     */
+    public function __construct($message)
+    {
+        if(self::$debug) {
+            throw new Exception($message, 1);
+        } else {
+            die('<h2>Opps! An error occurred.</h2> ' . $message);
+        }
+    }
 }
