@@ -428,7 +428,7 @@ class Router
         }
 
         $data = [
-            'route' => $route,
+            'route' => str_replace('//', '/', $route),
             'method' => strtoupper($method),
             'callback' => (is_object($callback) ? $callback : $this->namespaces['controllers'] . $callback),
             'alias' => (isset($settings['alias']) ? $settings['alias'] : (isset($settings['as']) ? $settings['as'] : null)),

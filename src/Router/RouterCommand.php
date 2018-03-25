@@ -98,7 +98,6 @@ class RouterCommand
     public function runRoute($command, $params = null, $path = '', $namespace = '')
     {
         if(!is_object($command)) {
-
 			$segments = explode('@', $command);
 			$controllerClass = str_replace([$namespace, '\\', '.'], ['', '/', '/'], $segments[0]);
 			$controllerMethod = $segments[1];
