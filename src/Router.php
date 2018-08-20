@@ -67,6 +67,9 @@ class Router
      */
     protected $mainMethod = 'main';
 
+    /**
+     * @var $errorCallback Route error callback function
+     */
     protected $errorCallback;
 
     /**
@@ -121,6 +124,14 @@ class Router
                     ? trim($namespaces['middlewares'], '\\') . '\\'
                     : '';
         }
+
+        if (isset($params['base_folder'])) {
+            $this->baseFolder = rtrim($params['base_folder'], '/');
+        }
+
+        if (isset($params['main_method'])) {
+            $this->mainMethod = $params['main_method'];
+        }
     }
 
     /**
@@ -131,11 +142,11 @@ class Router
      */
     public function __call($method, $params)
     {
-        if(is_null($params)) {
+        if (is_null($params)) {
             return;
         }
 
-        if( !in_array(strtoupper($method), explode('|', RouterRequest::$validMethods)) ) {
+        if (! in_array(strtoupper($method), explode('|', RouterRequest::$validMethods)) ) {
             return $this->exception($method . ' is not valid.');
         }
 
@@ -248,7 +259,7 @@ class Router
         $base = str_replace('\\', '/', str_replace($documentRoot, '', $getCwd) . '/');
         $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 
-        if (($base != $uri) && (substr($uri, -1) == '/')) {
+        if (($base !== $uri) && (substr($uri, -1) === '/')) {
             $uri = substr($uri, 0, (strlen($uri)-1));
         }
 
@@ -269,7 +280,7 @@ class Router
         // check if route is defined without regex
         if (in_array($uri, array_values($routes))) {
             foreach ($this->routes as $data) {
-                if (RouterRequest::validMethod($data['method'], $method) && ($data['route'] == $uri)) {
+                if (RouterRequest::validMethod($data['method'], $method) && ($data['route'] === $uri)) {
                     $foundRoute = true;
                     $this->runRouteMiddleware($data, 'before');
                     $this->runRouteCommand($data['callback']);
@@ -317,7 +328,7 @@ class Router
             ob_end_clean();
         }
 
-        if ($foundRoute == false) {
+        if ($foundRoute === false) {
             if (! $this->errorCallback) {
                 $this->errorCallback = function() {
                     header($_SERVER['SERVER_PROTOCOL']." 404 Not Found");
@@ -348,7 +359,7 @@ class Router
             $callback = $settings;
         } else {
             $group['before'][] = (!isset($settings['before']) ? null : $settings['before']);
-            $group['after'][]    = (!isset($settings['after']) ? null : $settings['after']);
+            $group['after'][]  = (!isset($settings['after']) ? null : $settings['after']);
         }
 
         $groupCount = count($this->groups);
@@ -422,10 +433,10 @@ class Router
         $classMethods = get_class_methods($this->namespaces['controllers'] . $controller);
         if ($classMethods) {
             foreach ($classMethods as $methodName) {
-                if (! strstr($methodName, '__')) {
-                    $method = 'any';
-                    foreach (explode('|', RouterRequest::$validMethods) as $m) {
-                        if (stripos($methodName, strtolower($m), 0) === 0) {
+                if(!strstr($methodName, '__')) {
+                    $method = "any";
+                    foreach(explode('|', RouterRequest::$validMethods) as $m) {
+                        if(stripos($methodName, strtolower($m), 0) === 0) {
                             $method = strtolower($m);
                             break;
                         }
@@ -433,16 +444,14 @@ class Router
 
                     $methodVar = lcfirst(str_replace($method, '', $methodName));
                     $r = new ReflectionMethod($this->namespaces['controllers'] . $controller, $methodName);
-                    $requiredParam = $r->getNumberOfRequiredParameters();
+                    $reqiredParam = $r->getNumberOfRequiredParameters();
                     $totalParam = $r->getNumberOfParameters();
 
-                    $value = ($methodVar === 'main' ? $route : $route . '/' . $methodVar);
-
-                    $this->addRoute(
-                        ($value.str_repeat('/{a}', $requiredParam).str_repeat('/{a?}', $totalParam-$requiredParam)),
-                        $method,
-                        ($controller.'@'.$methodName),
-                        $settings
+                    $value = ($methodVar === $this->mainMethod ? $route : $route.'/'.$methodVar);
+                    $this->{$method}(
+                        ($value.str_repeat('/{a}', $reqiredParam).str_repeat('/{a?}', $totalParam-$reqiredParam)),
+                        $settings,
+                        ($controller . '@' . $methodName)
                     );
                 }
             }
@@ -483,7 +492,7 @@ class Router
         }
 
         $page = dirname($_SERVER['PHP_SELF']);
-        $page = $page == '/' ? '' : $page;
+        $page = $page === '/' ? '' : $page;
         if (strstr($page, 'index.php')) {
             $data = implode('/', explode('/', $page));
             $page = str_replace($data, '', $page);
@@ -491,31 +500,24 @@ class Router
 
         $route = $page . $group . '/' . trim($uri, '/');
         $route = rtrim($route, '/');
-        if ($route == $page) {
+        if ($route === $page) {
             $route .= '/';
         }
 
         $data = [
             'route' => str_replace('//', '/', $route),
             'method' => strtoupper($method),
-            'callback' => (is_object($callback)
-                ? $callback 
-                : $this->namespaces['controllers'] . $callback
-            ),
+            'callback' => $callback,
             'name' => (isset($settings['name'])
                 ? $settings['name']
                 : null
             ),
             'before' => (isset($settings['before']) 
-                ? (is_string($settings['before'])
-                    ? $this->namespaces['middlewares'] . $settings['before']
-                    : $settings['before'])
+                ? $settings['before']
                 : null
             ),
             'after' => (isset($settings['after']) 
-                ? (is_string($settings['after'])
-                    ? $this->namespaces['middlewares'] . $settings['after']
-                    : $settings['after'])
+                ? $settings['after']
                 : null
             ),
             'group' => ($groupItem === -1) ? null : $this->groups[$groupItem]

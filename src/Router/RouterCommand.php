@@ -90,11 +90,11 @@ class RouterCommand
 			$controllerMethod = $segments[1];
 
             $controller = $this->resolveClass($controllerClass, $path, $namespace);
-            if (! is_null($params) && method_exists($controller, $controllerMethod)) {
-                echo call_user_func_array([$controller, $controllerMethod], $params);
-                return;
-            } elseif (is_null($params) && method_exists($controller, $controllerMethod)) {
-                echo call_user_func([$controller, $controllerMethod]);
+            if (method_exists($controller, $controllerMethod)) {
+                echo call_user_func_array(
+                    [$controller, $controllerMethod],
+                    (!is_null($params) ? $params : [])
+                );
                 return;
             }
  

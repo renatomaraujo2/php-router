@@ -47,11 +47,11 @@ class RouterRequest
     protected static function checkMethods($value, $method)
     {
         $valid = false;
-        if ($value == 'AJAX' && self::isAjax && $value == $method) {
+        if ($value === 'AJAX' && self::isAjax && $value === $method) {
             $valid = true;
-        } elseif ($value == 'AJAXP' && self::isAjax && $method == 'POST') {
+        } elseif ($value === 'AJAXP' && self::isAjax && $method === 'POST') {
             $valid = true;
-        } elseif (in_array($value, explode('|', self::$validMethods)) && ($value == $method || $value == 'ANY')) {
+        } elseif (in_array($value, explode('|', self::$validMethods)) && ($value === $method || $value === 'ANY')) {
             $valid = true;
         }
 
@@ -61,11 +61,11 @@ class RouterRequest
     /**
      * Check ajax request
      *
-     * @return array
+     * @return bool
      */
     protected static function isAjax()
     {
-        return (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest');
+        return (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest');
     }
 
     /**
@@ -83,7 +83,7 @@ class RouterRequest
         // Method getallheaders() not available: manually extract 'm
         $headers = [];
         foreach ($_SERVER as $name => $value) {
-            if ((substr($name, 0, 5) == 'HTTP_') || ($name == 'CONTENT_TYPE') || ($name == 'CONTENT_LENGTH')) {
+            if ((substr($name, 0, 5) == 'HTTP_') || ($name === 'CONTENT_TYPE') || ($name === 'CONTENT_LENGTH')) {
                 $headers[str_replace([' ', 'Http'], ['-', 'HTTP'], ucwords(strtolower(str_replace('_', ' ', substr($name, 5)))))] = $value;
             }
         }

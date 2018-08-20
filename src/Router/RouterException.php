@@ -22,7 +22,8 @@ class RouterException
     /**
      * Create Exception Class.
      *
-     * @return string|Exception
+     * @return string
+     * @throw Exception
      */
     public function __construct($message)
     {
