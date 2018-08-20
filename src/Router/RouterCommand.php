@@ -1,14 +1,13 @@
 <?php
-/*
-*
-* @ Package: Router - simple router class for php
-* @ Class: RouterCommand
-* @ Author: izni burak demirtas / @izniburak <info@burakdemirtas.org>
-* @ Web: http://burakdemirtas.org
-* @ URL: https://github.com/izniburak/php-router
-* @ Licence: The MIT License (MIT) - Copyright (c) - http://opensource.org/licenses/MIT
-*
-*/
+/**
+ * @ Package: Router - simple router class for php
+ * @ Class: RouterCommand
+ * @ Author: izni burak demirtas / @izniburak <info@burakdemirtas.org>
+ * @ Web: http://burakdemirtas.org
+ * @ URL: https://github.com/izniburak/php-router
+ * @ Licence: The MIT License (MIT) - Copyright (c) - http://opensource.org/licenses/MIT
+ */
+
 namespace Buki\Router;
 
 use Buki\Router\RouterException;
@@ -16,7 +15,7 @@ use Buki\Router\RouterException;
 class RouterCommand
 {
     /**
-     * Class instance variable
+     * @var Class instance variable
      */
     protected static $instance = null;
 
@@ -36,6 +35,7 @@ class RouterCommand
     /**
      * Throw new Exception for Router Error
      *
+     * @param $message
      * @return RouterException
      */
     public function exception($message = '')
@@ -46,84 +46,88 @@ class RouterCommand
     /**
      * Run Route Middlewares
      *
-     * @return true | false
+     * @param $command
+     * @param $path 
+     * @param $namespace
+     * 
+     * @return void
      */
-    public function beforeAfter($command, $middleware, $path = '', $namespace = '')
+    public function beforeAfter($command, $path = '', $namespace = '')
     {
-        if(!is_null($command)) {
-            if(is_array($command)) {
+        if (! is_null($command)) {
+            if (is_array($command)) {
                 foreach ($command as $key => $value) {
-                    $this->beforeAfter($value, $middleware, $path, $namespace);
+                    $this->beforeAfter($value, $path, $namespace);
                 }
-            }
-            elseif(is_object($command)) {
-                return call_user_func($command);
-            }
-            elseif(strstr($command, '@')) {
-                $segments = explode('@', $command);
-				$middlewareClass = str_replace([$namespace, '\\', '.'], ['', '/', '/'], $segments[0]);
-				$middlewareMethod = $segments[1];
+            } elseif (is_string($command)) {
+                $controller = $this->resolveClass($command, $path, $namespace);
+                if (method_exists($controller, 'handle')) {
+                    return call_user_func([$controller, 'handle']);
+                }
 
-				$middlewareFile = realpath($path . $middlewareClass . '.php');
-                if(!file_exists($middlewareFile)) {
-                    return $this->exception($middlewareClass . ' Middleware File is not found. Please, check file.');
-                }
-                require_once($middlewareFile);
-                $middlewareClass = $namespace . str_replace('/', '\\', $middlewareClass);
-                $controller = new $middlewareClass();
-
-                if(in_array($middlewareMethod, get_class_methods($controller))) {
-                    return call_user_func([$controller, $middlewareMethod]);
-                } else {
-                    return $this->exception($middlewareMethod . ' method is not found in <b>'.$middlewareClass.'</b> middleware. Please, check file.');
-                }
-            } else {
-                if(!is_null($middleware[$command]) && isset($middleware[$command])) {
-                    $this->beforeAfter($middleware[$command], $middleware, $path, $namespace);
-                } else {
-                    return false;
-                }
+                return $this->exception('handle() method is not found in <b>'.$command.'</b> class.');
             }
         }
-        else {
-            return false;
-        }
+        
+        return;
     }
 
     /**
      * Run Route Command; Controller or Closure
      *
-     * @return null
+     * @param $command 
+     * @param $params 
+     * @param $path 
+     * @param $namespace 
+     * 
+     * @return void
      */
     public function runRoute($command, $params = null, $path = '', $namespace = '')
     {
-        if(!is_object($command)) {
+        if (! is_object($command)) {
 			$segments = explode('@', $command);
 			$controllerClass = str_replace([$namespace, '\\', '.'], ['', '/', '/'], $segments[0]);
 			$controllerMethod = $segments[1];
 
-			$controllerFile = realpath($path . $controllerClass . '.php');
-			if(!file_exists($controllerFile)) {
-				return $this->exception($controllerClass . ' Controller File is not found. Please, check file.');
-			}
-			require_once($controllerFile);
-			$controllerClass = $namespace . str_replace('/', '\\', $controllerClass);
-			$controller = new $controllerClass();
-
-            if(!is_null($params) && in_array($controllerMethod, get_class_methods($controller))) {
+            $controller = $this->resolveClass($controllerClass, $path, $namespace);
+            if (! is_null($params) && method_exists($controller, $controllerMethod)) {
                 echo call_user_func_array([$controller, $controllerMethod], $params);
-            }
-            elseif(is_null($params) && in_array($controllerMethod, get_class_methods($controller))) {
+                return;
+            } elseif (is_null($params) && method_exists($controller, $controllerMethod)) {
                 echo call_user_func([$controller, $controllerMethod]);
-            } else {
-                return $this->exception($controllerMethod . ' method is not found in '.$controllerClass.' controller. Please, check file.');
+                return;
             }
+ 
+            return $this->exception($controllerMethod . ' method is not found in '.$controllerClass.' class.');
         } else {
-            if(!is_null($params)) {
+            if (! is_null($params)) {
                 echo call_user_func_array($command, $params);
-            } else {
-                echo call_user_func($command);
-            }
+                return;
+            } 
+
+            echo call_user_func($command);
         }
+    }
+
+    /**
+     * Resolve Controller or Middleware class.
+     *
+     * @param $class 
+     * @param $path 
+     * @param $namespace  
+     * 
+     * @return object
+     */
+    protected function resolveClass($class, $path, $namespace)
+    {
+        $file = realpath(rtrim($path, '/') . '/' . $class . '.php');
+        if (! file_exists($file)) {
+            return $this->exception($class . ' class is not found. Please, check file.');
+        }
+
+        require_once($file);
+        $class = $namespace . str_replace('/', '\\', $class);
+        
+        return new $class();
     }
 }

@@ -11,18 +11,31 @@
 */
 namespace Buki;
 
+use ReflectionMethod;
 use Buki\Router\RouterRequest;
 use Buki\Router\RouterCommand;
 use Buki\Router\RouterException;
 
 class Router
 {
+    /**
+     * @var $baseFolder Pattern definations for parameters of Route
+     */
     protected $baseFolder;
 
+    /**
+     * @var $routes Routes list
+     */
     protected $routes = [];
-    protected $middlewares = [];
+
+    /**
+     * @var $groups List of group routes
+     */
     protected $groups = [];
 
+    /**
+     * @var $patterns Pattern definations for parameters of Route
+     */
     protected $patterns = [
         '{a}' => '([^/]+)',
         '{d}' => '([0-9]+)',
@@ -33,51 +46,80 @@ class Router
         '{*}' => '(.*)'
     ];
 
+    /**
+     * @var $namespaces Namespaces of Controllers and Middlewares files
+     */
     protected $namespaces = [
         'middlewares' => '',
         'controllers' => ''
     ];
 
+    /**
+     * @var $path Paths of Controllers and Middlewares files
+     */
     protected $paths = [
         'controllers' => 'Controllers',
         'middlewares' => 'Middlewares'
     ];
 
+    /**
+     * @var $mainMethod Main method for controller
+     */
+    protected $mainMethod = 'main';
+
     protected $errorCallback;
 
     /**
      * Router constructer method.
+     * 
+     * @param array $params
      *
-     * @return
+     * @return void
      */
-    function __construct(Array $params = [])
+    function __construct(array $params = [])
     {
         $this->baseFolder = realpath(getcwd());
 
-        if(is_null($params) || empty($params)) {
+        if (empty($params)) {
             return;
         }
 
-        if(isset($params['debug']) && is_bool($params['debug'])) {
+        if (isset($params['debug']) && is_bool($params['debug'])) {
             RouterException::$debug = $params['debug'];
         }
 
-        if(isset($params['paths']) && $paths = $params['paths']) {
-            $this->paths['controllers']	= (
-                isset($paths['controllers']) ? $this->baseFolder . '/' . trim($paths['controllers'], '/') . '/' : $this->paths['controllers']
-            );
-            $this->paths['middlewares']	= (
-                isset($paths['middlewares']) ? $this->baseFolder . '/' . trim($paths['middlewares'], '/') . '/' : $this->paths['middlewares']
-            );
+        $this->setPaths($params);
+    }
+
+    /**
+     * Set paths and namespaces for Controllers and Middlewares.
+     *
+     * @return void
+     */
+    protected function setPaths($params)
+    {
+        if (isset($params['paths']) && $paths = $params['paths']) {
+            $this->paths['controllers']	= 
+                isset($paths['controllers'])
+                    ? trim($paths['controllers'], '/')
+                    : $this->paths['controllers'];
+
+            $this->paths['middlewares']	= 
+                isset($paths['middlewares'])
+                    ? trim($paths['middlewares'], '/')
+                    : $this->paths['middlewares'];
         }
 
-        if(isset($params['namespaces']) && $namespaces = $params['namespaces']) {
-            $this->namespaces['controllers']	= (
-                isset($namespaces['controllers']) ? trim($namespaces['controllers'], '\\') . '\\' : ''
-            );
-            $this->namespaces['middlewares']	= (
-                isset($namespaces['middlewares']) ? trim($namespaces['middlewares'], '\\') . '\\' : ''
-            );
+        if (isset($params['namespaces']) && $namespaces = $params['namespaces']) {
+            $this->namespaces['controllers'] = 
+                isset($namespaces['controllers'])
+                    ? trim($namespaces['controllers'], '\\') . '\\'
+                    : '';
+
+            $this->namespaces['middlewares'] = 
+                isset($namespaces['middlewares'])
+                    ? trim($namespaces['middlewares'], '\\') . '\\'
+                    : '';
         }
     }
 
@@ -85,7 +127,7 @@ class Router
      * Add route method;
      * Get, Post, Put, Delete, Patch, Any, Ajax...
      *
-     * @return
+     * @return void
      */
     public function __call($method, $params)
     {
@@ -101,21 +143,22 @@ class Router
         $callback = $params[1];
         $settings = null;
 
-        if(count($params) > 2) {
+        if (count($params) > 2) {
             $settings = $params[1];
             $callback = $params[2];
         }
 
-        if(strstr($route, '{')) {
+        if (strstr($route, '{')) {
             $route1 = $route2 = '';
-            foreach(explode('/', $route) as $key => $value) {
-                if($value != '') {
-                    if(!strpos($value, '?')) {
+            foreach (explode('/', $route) as $key => $value) {
+                if ($value != '') {
+                    if (! strpos($value, '?')) {
                         $route1 .= '/' . $value;
                     } else {
-                        if($route2 == '') {
+                        if ($route2 == '') {
                             $this->addRoute($route1, $method, $callback, $settings);
                         }
+
                         $route2 = $route1 . '/' . str_replace('?', '', $value);
                         $this->addRoute($route2, $method, $callback, $settings);
                         $route1 = $route2;
@@ -123,7 +166,7 @@ class Router
                 }
             }
 
-            if($route2 == '') {
+            if ($route2 == '') {
                 $this->addRoute($route1, $method, $callback, $settings);
             }
         } else {
@@ -135,18 +178,23 @@ class Router
     /**
      * Add new route method one or more http methods.
      *
-     * @return null
+     * @param string $methods
+     * @param string $route 
+     * @param array|string|closure $settings
+     * @param string|closure $callback
+     * 
+     * @return void
      */
     public function add($methods, $route, $settings, $callback = null)
     {
-        if(is_null($callback)) {
+        if (is_null($callback)) {
             $callback = $settings;
             $settings = null;
         }
 
-        if(strstr($methods, '|')) {
+        if (strstr($methods, '|')) {
             foreach (array_unique(explode('|', $methods)) as $method) {
-                if($method != '') {
+                if ($method != '') {
                     call_user_func_array([$this, strtolower($method)], [$route, $settings, $callback]);
                 }
             }
@@ -160,20 +208,23 @@ class Router
     /**
      * Add new route rules pattern; String or Array
      *
-     * @return
+     * @param string|array $pattern
+     * @param null|string $attr
+     * 
+     * @return void
      */
     public function pattern($pattern, $attr = null)
     {
-        if(is_array($pattern)) {
+        if (is_array($pattern)) {
             foreach ($pattern as $key => $value) {
-                if(!in_array('{' . $key . '}', array_keys($this->patterns))) {
+                if (! in_array('{' . $key . '}', array_keys($this->patterns))) {
                     $this->patterns['{' . $key . '}'] = '(' . $value . ')';
                 } else {
                     return $this->exception($key . ' pattern cannot be changed.');
                 }
             }
         } else {
-            if(!in_array('{' . $pattern . '}', array_keys($this->patterns))) {
+            if (! in_array('{' . $pattern . '}', array_keys($this->patterns))) {
                 $this->patterns['{' . $pattern . '}'] = '(' . $attr . ')';
             } else {
                 return $this->exception($pattern . ' pattern cannot be changed.');
@@ -184,19 +235,10 @@ class Router
     }
 
     /**
-     * Add new middleware
-     *
-     * @return null
-     */
-    public function middleware($name, $command)
-    {
-        $this->middlewares[$name] = $command;
-    }
-
-    /**
      * Run Routes
      *
-     * @return true | throw Exception
+     * @return void
+     * @throw Exception
      */
     public function run()
     {
@@ -206,10 +248,11 @@ class Router
         $base = str_replace('\\', '/', str_replace($documentRoot, '', $getCwd) . '/');
         $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 
-        if(($base != $uri) && (substr($uri, -1) == '/')) {
+        if (($base != $uri) && (substr($uri, -1) == '/')) {
             $uri = substr($uri, 0, (strlen($uri)-1));
         }
-        if($uri === '') {
+
+        if ($uri === '') {
             $uri = '/';
         }
 
@@ -251,7 +294,7 @@ class Router
                         array_shift($matched);
                         $newMatched = [];
                         foreach ($matched as $key => $value) {
-                            if(strstr($value, '/')) {
+                            if (strstr($value, '/')) {
                                 foreach (explode('/', $value) as $k => $v) {
                                     $newMatched[] = trim(urldecode($v));
                                 }
@@ -270,12 +313,12 @@ class Router
         }
 
         // If it originally was a HEAD request, clean up after ourselves by emptying the output buffer
-        if (strtoupper($_SERVER['REQUEST_METHOD']) == 'HEAD') {
+        if (strtoupper($_SERVER['REQUEST_METHOD']) === 'HEAD') {
             ob_end_clean();
         }
 
         if ($foundRoute == false) {
-            if (!$this->errorCallback) {
+            if (! $this->errorCallback) {
                 $this->errorCallback = function() {
                     header($_SERVER['SERVER_PROTOCOL']." 404 Not Found");
                     return $this->exception('Route not found. Looks like something went wrong. Please try again.');
@@ -288,7 +331,11 @@ class Router
     /**
      * Routes Group
      *
-     * @return null
+     * @param string $name 
+     * @param closure|array $settings
+     * @param null|closure $callback
+     * 
+     * @return void
      */
     public function group($name, $settings = null, $callback = null)
     {
@@ -297,7 +344,7 @@ class Router
         $group['route'] = '/' . $groupName;
         $group['before'] = $group['after'] = null;
 
-        if(is_null($callback)) {
+        if (is_null($callback)) {
             $callback = $settings;
         } else {
             $group['before'][] = (!isset($settings['before']) ? null : $settings['before']);
@@ -305,24 +352,24 @@ class Router
         }
 
         $groupCount = count($this->groups);
-        if($groupCount > 0) {
+        if ($groupCount > 0) {
             $list = [];
             foreach ($this->groups as $key => $value) {
-                if(is_array($value['before'])) {
-                    foreach($value['before'] as $k => $v) {
+                if (is_array($value['before'])) {
+                    foreach ($value['before'] as $k => $v) {
                         $list['before'][] = $v;    
                     }
-                    foreach($value['after'] as $k => $v) {
+                    foreach ($value['after'] as $k => $v) {
                         $list['after'][] = $v;    
                     }
                 } 
             }
 
-            if(!is_null($group['before'])) {
+            if (! is_null($group['before'])) {
                 $list['before'][] = $group['before'][0];
             }
 
-            if(!is_null($group['after'])) {
+            if (! is_null($group['after'])) {
                 $list['after'][] = $group['after'][0];
             }
 
@@ -335,7 +382,7 @@ class Router
 
         array_push($this->groups, $group);
 
-        if(is_object($callback)) {
+        if (is_object($callback)) {
             call_user_func_array($callback, [$this]);
         }
 
@@ -345,54 +392,70 @@ class Router
     /**
      * Added route from methods of Controller file.
      *
-     * @return null
+     * @param string $route
+     * @param string|array $settings
+     * @param null|string $controller
+     * 
+     * @return void
      */
-    public function controller($route, $controller)
+    public function controller($route, $settings, $controller = null)
     {
+        if (is_null($controller)) {
+            $controller = $settings;
+            $settings = [];
+        }
+
         $controller = str_replace(['\\', '.'], '/', $controller);
         $controllerFile = realpath(
-            $this->paths['controllers'] . $controller . '.php'
+            rtrim($this->paths['controllers'], '/') . '/' . $controller . '.php'
         );
-        if(file_exists($controllerFile)) {
-            if(!class_exists($controller)) {
-                $req = require($controllerFile);
-            }
-        } else {
-            return $this->exception($controller . " controller file is not found! Please, check file.");
+        
+        if (! file_exists($controllerFile)) {
+            return $this->exception($controller . ' class is not found!');
+        }
+
+        if (! class_exists($controller)) {
+            require($controllerFile);
         }
 
         $controller = str_replace('/', '\\', $controller);
         $classMethods = get_class_methods($this->namespaces['controllers'] . $controller);
-        if($classMethods) {
+        if ($classMethods) {
             foreach ($classMethods as $methodName) {
-                if(!strstr($methodName, '__')) {
-                    $method = "any";
-                    foreach(explode('|', RouterRequest::$validMethods) as $m) {
-                        if(stripos($methodName, strtolower($m), 0) === 0) {
+                if (! strstr($methodName, '__')) {
+                    $method = 'any';
+                    foreach (explode('|', RouterRequest::$validMethods) as $m) {
+                        if (stripos($methodName, strtolower($m), 0) === 0) {
                             $method = strtolower($m);
                             break;
                         }
                     }
 
                     $methodVar = lcfirst(str_replace($method, '', $methodName));
-                    $r = new \ReflectionMethod($this->namespaces['controllers'] . $controller, $methodName);
-                    $paramNum = $r->getNumberOfRequiredParameters();
-                    $paramNum2 = $r->getNumberOfParameters();
+                    $r = new ReflectionMethod($this->namespaces['controllers'] . $controller, $methodName);
+                    $requiredParam = $r->getNumberOfRequiredParameters();
+                    $totalParam = $r->getNumberOfParameters();
 
-                    $value = ($methodVar == 'main' ? $route : $route . '/' . $methodVar);
-                    $this->{$method}(($value . str_repeat('/{a}', $paramNum) . str_repeat('/{a?}', $paramNum2 - $paramNum)), ($controller . '@' . $methodName));
+                    $value = ($methodVar === 'main' ? $route : $route . '/' . $methodVar);
+
+                    $this->addRoute(
+                        ($value.str_repeat('/{a}', $requiredParam).str_repeat('/{a?}', $totalParam-$requiredParam)),
+                        $method,
+                        ($controller.'@'.$methodName),
+                        $settings
+                    );
                 }
             }
             unset($r);
         }
-
-        $req = null;
     }
 
     /**
      * Routes error function. (Closure)
      *
-     * @return null
+     * @param $callback
+     * 
+     * @return void
      */
     public function error($callback)
     {
@@ -402,13 +465,18 @@ class Router
     /**
      * Add new Route and it's settings
      *
-     * @return null
+     * @param $uri
+     * @param $method 
+     * @param $callback
+     * @param $settings
+     * 
+     * @return void
      */
     private function addRoute($uri, $method, $callback, $settings)
     {
         $groupItem = count($this->groups) - 1;
         $group = '';
-        if($groupItem > -1) {
+        if ($groupItem > -1) {
             foreach ($this->groups as $key => $value) {
                 $group .= $value['route'];
             }
@@ -416,24 +484,40 @@ class Router
 
         $page = dirname($_SERVER['PHP_SELF']);
         $page = $page == '/' ? '' : $page;
-        if(strstr($page, 'index.php')) {
+        if (strstr($page, 'index.php')) {
             $data = implode('/', explode('/', $page));
             $page = str_replace($data, '', $page);
         }
 
         $route = $page . $group . '/' . trim($uri, '/');
         $route = rtrim($route, '/');
-        if($route == $page) {
+        if ($route == $page) {
             $route .= '/';
         }
 
         $data = [
             'route' => str_replace('//', '/', $route),
             'method' => strtoupper($method),
-            'callback' => (is_object($callback) ? $callback : $this->namespaces['controllers'] . $callback),
-            'alias' => (isset($settings['alias']) ? $settings['alias'] : (isset($settings['as']) ? $settings['as'] : null)),
-            'before' => (isset($settings['before']) ? (!is_array($settings['before']) && !is_object($settings['before']) && strstr($settings['before'], '@') ? $this->namespaces['middlewares'] . $settings['before'] : $settings['before'] ) : null),
-            'after' => (isset($settings['after']) ? (!is_array($settings['after']) && !is_object($settings['after']) && strstr($settings['after'], '@') ? $this->namespaces['middlewares'] . $settings['after'] : $settings['after'] ) : null),
+            'callback' => (is_object($callback)
+                ? $callback 
+                : $this->namespaces['controllers'] . $callback
+            ),
+            'name' => (isset($settings['name'])
+                ? $settings['name']
+                : null
+            ),
+            'before' => (isset($settings['before']) 
+                ? (is_string($settings['before'])
+                    ? $this->namespaces['middlewares'] . $settings['before']
+                    : $settings['before'])
+                : null
+            ),
+            'after' => (isset($settings['after']) 
+                ? (is_string($settings['after'])
+                    ? $this->namespaces['middlewares'] . $settings['after']
+                    : $settings['after'])
+                : null
+            ),
             'group' => ($groupItem === -1) ? null : $this->groups[$groupItem]
         ];
         array_push($this->routes, $data);
@@ -447,33 +531,41 @@ class Router
     private function runRouteCommand($command, $params = null)
     {
         $this->routerCommand()->runRoute(
-            $command, $params, $this->paths['controllers'], $this->namespaces['controllers']
+            $command,
+            $params,
+            $this->baseFolder . '/' . $this->paths['controllers'],
+            $this->namespaces['controllers']
         );
     }
 
     /**
      * Detect Routes Middleware; before or after
      *
-     * @return null
+     * @param $middleware 
+     * @param $type
+     * 
+     * @return void
      */
     public function runRouteMiddleware($middleware, $type)
     {
-        if($type == 'before') {
-            if(!is_null($middleware['group'])) {
+        $middlewarePath = $this->baseFolder . '/' . $this->paths['middlewares'];
+        $middlewareNs = $this->namespaces['middlewares'];
+        if ($type == 'before') {
+            if (! is_null($middleware['group'])) {
                 $this->routerCommand()->beforeAfter(
-                    $middleware['group'][$type], $this->middlewares, $this->paths['middlewares'], $this->namespaces['middlewares']
+                    $middleware['group'][$type], $middlewarePath, $middlewareNs
                 );
             }
             $this->routerCommand()->beforeAfter(
-                $middleware[$type], $this->middlewares, $this->paths['middlewares'], $this->namespaces['middlewares']
+                $middleware[$type], $middlewarePath, $middlewareNs
             );
         } else {
             $this->routerCommand()->beforeAfter(
-                $middleware[$type], $this->middlewares, $this->paths['middlewares'], $this->namespaces['middlewares']
+                $middleware[$type], $middlewarePath, $middlewareNs
             );
-            if(!is_null($middleware['group'])) {
+            if (! is_null($middleware['group'])) {
                 $this->routerCommand()->beforeAfter(
-                    $middleware['group'][$type], $this->middlewares, $this->paths['middlewares'], $this->namespaces['middlewares']
+                    $middleware['group'][$type], $middlewarePath, $middlewareNs
                 );
             }
         }
@@ -482,7 +574,7 @@ class Router
     /**
      * Routes Group endpoint
      *
-     * @return null
+     * @return void
      */
     private function endGroup()
     {
@@ -492,11 +584,11 @@ class Router
     /**
      * Display all Routes.
      *
-     * @return null
+     * @return void
      */
     public function getList()
     {
-        echo '<pre style="border:1px solid #eee;padding:0 10px;width:960px;max-height:780;margin:20px auto;font-size:17px;overflow:auto;">';
+        echo '<pre style="font-size:15px;">';
         var_dump($this->getRoutes());
         echo '</pre>';
         die();
@@ -514,6 +606,8 @@ class Router
 
     /**
      * Throw new Exception for Router Error
+     * 
+     * @param $message
      *
      * @return RouterException
      */
@@ -528,7 +622,7 @@ class Router
      * @return RouterCommand
      */
     public function routerCommand()
-    {    
+    {
         return RouterCommand::getInstance();
     }
 }

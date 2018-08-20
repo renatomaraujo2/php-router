@@ -1,36 +1,41 @@
 <?php
-/*
-*
-* @ Package: Router - simple router class for php
-* @ Class: RouterRequest
-* @ Author: izni burak demirtas / @izniburak <info@burakdemirtas.org>
-* @ Web: http://burakdemirtas.org
-* @ URL: https://github.com/izniburak/php-router
-* @ Licence: The MIT License (MIT) - Copyright (c) - http://opensource.org/licenses/MIT
-*
-*/
+/**
+ * @ Package: Router - simple router class for php
+ * @ Class: RouterCommand
+ * @ Author: izni burak demirtas / @izniburak <info@burakdemirtas.org>
+ * @ Web: http://burakdemirtas.org
+ * @ URL: https://github.com/izniburak/php-router
+ * @ Licence: The MIT License (MIT) - Copyright (c) - http://opensource.org/licenses/MIT
+ */
+
 namespace Buki\Router;
 
 class RouterRequest
 {
+    /**
+     * @var $validMethods Valid methods for Requests
+     */
     public static $validMethods = 'GET|POST|PUT|DELETE|HEAD|OPTIONS|PATCH|ANY|AJAX|AJAXP';
 
     /**
-     * method status
+     * Request method validation
      *
-     * @return true|false
+     * @return bool
      */
     public static function validMethod($data, $method)
     {
         $valid = false;
-        if(strstr($data, '|')) {
+        if (strstr($data, '|')) {
             foreach (explode('|', $data) as $value) {
                 $valid = self::checkMethods($value, $method);
-                if($valid) break;
+                if ($valid) {
+                    break;
+                }
             }
         } else {
             $valid = self::checkMethods($data, $method);
         }
+
         return $valid;
     }
 
@@ -39,25 +44,36 @@ class RouterRequest
      *
      * @return true|false
      */
-    private static function checkMethods($value, $method)
+    protected static function checkMethods($value, $method)
     {
         $valid = false;
-        if($value == 'AJAX' && isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest' && $value == $method) {
+        if ($value == 'AJAX' && self::isAjax && $value == $method) {
             $valid = true;
-        } elseif($value == 'AJAXP' && isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest' && $method == 'POST') {
+        } elseif ($value == 'AJAXP' && self::isAjax && $method == 'POST') {
             $valid = true;
-        } elseif(in_array($value, explode('|', self::$validMethods)) && ($value == $method || $value == 'ANY')) {
+        } elseif (in_array($value, explode('|', self::$validMethods)) && ($value == $method || $value == 'ANY')) {
             $valid = true;
         }
+
         return $valid;
+    }
+
+    /**
+     * Check ajax request
+     *
+     * @return array
+     */
+    protected static function isAjax()
+    {
+        return (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest');
     }
 
     /**
      * Get all request headers
      *
-     * @return array The request headers
+     * @return array
      */
-    private static function getRequestHeaders()
+    protected static function getRequestHeaders()
     {
         // If getallheaders() is available, use that
         if (function_exists('getallheaders')) {
@@ -78,7 +94,7 @@ class RouterRequest
     /**
      * Get the request method used, taking overrides into account
      *
-     * @return string The Request method to handle
+     * @return string
      */
     public static function getRequestMethod()
     {
@@ -89,12 +105,11 @@ class RouterRequest
         if ($method == 'HEAD') {
             ob_start();
             $method = 'GET';
-        } // If it's a POST request, check for a method override header
-        elseif ($method == 'POST') {
+        } elseif ($method == 'POST') {
             $headers = self::getRequestHeaders();
             if (isset($headers['X-HTTP-Method-Override']) && in_array($headers['X-HTTP-Method-Override'], ['PUT', 'DELETE', 'PATCH', 'OPTIONS'])) {
                 $method = $headers['X-HTTP-Method-Override'];
-            } elseif(!empty($_POST['_method'])) {
+            } elseif (! empty($_POST['_method'])) {
                 $method = strtoupper($_POST['_method']);
             }
         }
