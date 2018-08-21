@@ -18,7 +18,7 @@ simple Router class for PHP. with the support of Controllers and Middlewares.
 ### Features
 - Supports GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD, AJAX and ANY request methods
 - Controllers support (Example: HomeController@about)
-- Before and after Route Middlewares support (Example: Auth@isLogin)
+- Before and after Route Middlewares support
 - Static Route Patterns
 - Dynamic Route Patterns
 - Easy-to-use patterns
@@ -53,11 +53,12 @@ $ composer require izniburak/router
 ```php
 require 'vendor/autoload.php';
 
-$router = new \Buki\Router();
+$router = new Buki\Router();
 
 $router->get('/', function() {
     return 'Hello World!';
 });
+$router->get('/controller', 'TestController@main');
 
 $router->run();
 ```
@@ -90,6 +91,6 @@ Documentation page: [Buki\Router Docs][doc-url]
 - [izniburak](https://github.com/izniburak) İzni Burak Demirtaş - creator, maintainer
 
 [mit-url]: http://opensource.org/licenses/MIT
-[doc-url]: https://github.com/izniburak/php-router/wiki
+[doc-url]: https://github.com/izniburak/php-router/wiki/1.-Home
 [author-url]: http://burakdemirtas.org
 [twitter-url]: https://twitter.com/izniburak
