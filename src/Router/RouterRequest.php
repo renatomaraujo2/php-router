@@ -47,9 +47,9 @@ class RouterRequest
     protected static function checkMethods($value, $method)
     {
         $valid = false;
-        if ($value === 'AJAX' && self::isAjax && $value === $method) {
+        if ($value === 'AJAX' && self::isAjax() && $value === $method) {
             $valid = true;
-        } elseif ($value === 'AJAXP' && self::isAjax && $method === 'POST') {
+        } elseif ($value === 'AJAXP' && self::isAjax() && $method === 'POST') {
             $valid = true;
         } elseif (in_array($value, explode('|', self::$validMethods)) && ($value === $method || $value === 'ANY')) {
             $valid = true;
