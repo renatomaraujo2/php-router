@@ -388,8 +388,8 @@ class Router
             $group['after'] = $list['after'];
         }
 
-        $group['before'] = array_values(array_unique($group['before']));
-        $group['after'] = array_values(array_unique($group['after']));
+        $group['before'] = array_values(array_unique( (array) $group['before']));
+        $group['after'] = array_values(array_unique( (array) $group['after']));
 
         array_push($this->groups, $group);
 
