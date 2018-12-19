@@ -15,15 +15,17 @@ use Exception;
 class RouterException
 {
     /**
-     * @var $debug Debug mode
+     * @var bool $debug Debug mode
      */
     public static $debug = false;
 
     /**
      * Create Exception Class.
      *
+     * @param $message
+     *
      * @return string
-     * @throw Exception
+     * @throws Exception
      */
     public function __construct($message)
     {

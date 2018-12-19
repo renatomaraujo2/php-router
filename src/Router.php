@@ -11,6 +11,7 @@
 */
 namespace Buki;
 
+use Closure;
 use ReflectionMethod;
 use Buki\Router\RouterRequest;
 use Buki\Router\RouterCommand;
@@ -19,22 +20,22 @@ use Buki\Router\RouterException;
 class Router
 {
     /**
-     * @var $baseFolder Pattern definations for parameters of Route
+     * @var string $baseFolder Pattern definations for parameters of Route
      */
     protected $baseFolder;
 
     /**
-     * @var $routes Routes list
+     * @var array $routes Routes list
      */
     protected $routes = [];
 
     /**
-     * @var $groups List of group routes
+     * @var array $groups List of group routes
      */
     protected $groups = [];
 
     /**
-     * @var $patterns Pattern definations for parameters of Route
+     * @var array $patterns Pattern definations for parameters of Route
      */
     protected $patterns = [
         '{a}' => '([^/]+)',
@@ -47,7 +48,7 @@ class Router
     ];
 
     /**
-     * @var $namespaces Namespaces of Controllers and Middlewares files
+     * @var array $namespaces Namespaces of Controllers and Middlewares files
      */
     protected $namespaces = [
         'middlewares' => '',
@@ -55,7 +56,7 @@ class Router
     ];
 
     /**
-     * @var $path Paths of Controllers and Middlewares files
+     * @var array $path Paths of Controllers and Middlewares files
      */
     protected $paths = [
         'controllers' => 'Controllers',
@@ -63,17 +64,17 @@ class Router
     ];
 
     /**
-     * @var $mainMethod Main method for controller
+     * @var string $mainMethod Main method for controller
      */
     protected $mainMethod = 'main';
 
     /**
-     * @var $errorCallback Route error callback function
+     * @var Closure $errorCallback Route error callback function
      */
     protected $errorCallback;
 
     /**
-     * Router constructer method.
+     * Router constructor method.
      * 
      * @param array $params
      *
@@ -96,6 +97,8 @@ class Router
 
     /**
      * Set paths and namespaces for Controllers and Middlewares.
+     *
+     * @param array $params
      *
      * @return void
      */
@@ -138,7 +141,11 @@ class Router
      * Add route method;
      * Get, Post, Put, Delete, Patch, Any, Ajax...
      *
+     * @param $method
+     * @param $params
+     *
      * @return void
+     * @throws
      */
     public function __call($method, $params)
     {
@@ -223,6 +230,7 @@ class Router
      * @param null|string $attr
      * 
      * @return void
+     * @throws
      */
     public function pattern($pattern, $attr = null)
     {
@@ -249,7 +257,7 @@ class Router
      * Run Routes
      *
      * @return void
-     * @throw Exception
+     * @throws
      */
     public function run()
     {
@@ -408,6 +416,7 @@ class Router
      * @param null|string $controller
      * 
      * @return void
+     * @throws
      */
     public function controller($route, $settings, $controller = null)
     {
@@ -457,6 +466,8 @@ class Router
             }
             unset($r);
         }
+
+        return;
     }
 
     /**
@@ -528,6 +539,8 @@ class Router
     /**
      * Run Route Command; Controller or Closure
      *
+     * @param $command
+     * @param $params
      * @return null
      */
     private function runRouteCommand($command, $params = null)
@@ -612,6 +625,7 @@ class Router
      * @param $message
      *
      * @return RouterException
+     * @throws
      */
     public function exception($message = '')
     {

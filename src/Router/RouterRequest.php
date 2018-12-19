@@ -13,12 +13,15 @@ namespace Buki\Router;
 class RouterRequest
 {
     /**
-     * @var $validMethods Valid methods for Requests
+     * @var string $validMethods Valid methods for Requests
      */
     public static $validMethods = 'GET|POST|PUT|DELETE|HEAD|OPTIONS|PATCH|ANY|AJAX|AJAXP';
 
     /**
      * Request method validation
+     *
+     * @param string $data
+     * @param string $method
      *
      * @return bool
      */
@@ -42,7 +45,10 @@ class RouterRequest
     /**
      * check method valid
      *
-     * @return true|false
+     * @param string $value
+     * @param string $method
+     *
+     * @return bool
      */
     protected static function checkMethods($value, $method)
     {
@@ -83,7 +89,7 @@ class RouterRequest
         // Method getallheaders() not available: manually extract 'm
         $headers = [];
         foreach ($_SERVER as $name => $value) {
-            if ((substr($name, 0, 5) == 'HTTP_') || ($name === 'CONTENT_TYPE') || ($name === 'CONTENT_LENGTH')) {
+            if (substr($name, 0, 5) == 'HTTP_' || $name === 'CONTENT_TYPE' || $name === 'CONTENT_LENGTH') {
                 $headers[str_replace([' ', 'Http'], ['-', 'HTTP'], ucwords(strtolower(str_replace('_', ' ', substr($name, 5)))))] = $value;
             }
         }
@@ -102,10 +108,10 @@ class RouterRequest
         $method = $_SERVER['REQUEST_METHOD'];
         // If it's a HEAD request override it to being GET and prevent any output, as per HTTP Specification
         // @url http://www.w3.org/Protocols/rfc2616/rfc2616-sec9.html#sec9.4
-        if ($method == 'HEAD') {
+        if ($method === 'HEAD') {
             ob_start();
             $method = 'GET';
-        } elseif ($method == 'POST') {
+        } elseif ($method === 'POST') {
             $headers = self::getRequestHeaders();
             if (isset($headers['X-HTTP-Method-Override']) && in_array($headers['X-HTTP-Method-Override'], ['PUT', 'DELETE', 'PATCH', 'OPTIONS'])) {
                 $method = $headers['X-HTTP-Method-Override'];

@@ -10,19 +10,17 @@
 
 namespace Buki\Router;
 
-use Buki\Router\RouterException;
-
 class RouterCommand
 {
     /**
-     * @var Class instance variable
+     * @var RouterCommand|null Class instance variable
      */
     protected static $instance = null;
 
     /**
      * Get class instance
      *
-     * @return PdoxObject
+     * @return RouterCommand
      */
     public static function getInstance()
     {
@@ -36,7 +34,9 @@ class RouterCommand
      * Throw new Exception for Router Error
      *
      * @param $message
+     *
      * @return RouterException
+     * @throws
      */
     public function exception($message = '')
     {
@@ -50,7 +50,8 @@ class RouterCommand
      * @param $path 
      * @param $namespace
      * 
-     * @return void
+     * @return mixed|void
+     * @throws
      */
     public function beforeAfter($command, $path = '', $namespace = '')
     {
@@ -81,6 +82,7 @@ class RouterCommand
      * @param $namespace 
      * 
      * @return void
+     * @throws
      */
     public function runRoute($command, $params = null, $path = '', $namespace = '')
     {
@@ -117,6 +119,7 @@ class RouterCommand
      * @param $namespace  
      * 
      * @return object
+     * @throws
      */
     protected function resolveClass($class, $path, $namespace)
     {
