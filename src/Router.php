@@ -75,7 +75,7 @@ class Router
 
     /**
      * Router constructor method.
-     * 
+     *
      * @param array $params
      *
      * @return void
@@ -105,24 +105,24 @@ class Router
     protected function setPaths($params)
     {
         if (isset($params['paths']) && $paths = $params['paths']) {
-            $this->paths['controllers']	= 
+            $this->paths['controllers']	=
                 isset($paths['controllers'])
                     ? trim($paths['controllers'], '/')
                     : $this->paths['controllers'];
 
-            $this->paths['middlewares']	= 
+            $this->paths['middlewares']	=
                 isset($paths['middlewares'])
                     ? trim($paths['middlewares'], '/')
                     : $this->paths['middlewares'];
         }
 
         if (isset($params['namespaces']) && $namespaces = $params['namespaces']) {
-            $this->namespaces['controllers'] = 
+            $this->namespaces['controllers'] =
                 isset($namespaces['controllers'])
                     ? trim($namespaces['controllers'], '\\') . '\\'
                     : '';
 
-            $this->namespaces['middlewares'] = 
+            $this->namespaces['middlewares'] =
                 isset($namespaces['middlewares'])
                     ? trim($namespaces['middlewares'], '\\') . '\\'
                     : '';
@@ -197,10 +197,10 @@ class Router
      * Add new route method one or more http methods.
      *
      * @param string $methods
-     * @param string $route 
+     * @param string $route
      * @param array|string|closure $settings
      * @param string|closure $callback
-     * 
+     *
      * @return void
      */
     public function add($methods, $route, $settings, $callback = null)
@@ -228,7 +228,7 @@ class Router
      *
      * @param string|array $pattern
      * @param null|string $attr
-     * 
+     *
      * @return void
      * @throws
      */
@@ -350,10 +350,10 @@ class Router
     /**
      * Routes Group
      *
-     * @param string $name 
+     * @param string $name
      * @param closure|array $settings
      * @param null|closure $callback
-     * 
+     *
      * @return void
      */
     public function group($name, $settings = null, $callback = null)
@@ -376,12 +376,12 @@ class Router
             foreach ($this->groups as $key => $value) {
                 if (is_array($value['before'])) {
                     foreach ($value['before'] as $k => $v) {
-                        $list['before'][] = $v;    
+                        $list['before'][] = $v;
                     }
                     foreach ($value['after'] as $k => $v) {
-                        $list['after'][] = $v;    
+                        $list['after'][] = $v;
                     }
-                } 
+                }
             }
 
             if (! is_null($group['before'])) {
@@ -414,7 +414,7 @@ class Router
      * @param string $route
      * @param string|array $settings
      * @param null|string $controller
-     * 
+     *
      * @return void
      * @throws
      */
@@ -429,7 +429,7 @@ class Router
         $controllerFile = realpath(
             rtrim($this->paths['controllers'], '/') . '/' . $controller . '.php'
         );
-        
+
         if (! file_exists($controllerFile)) {
             return $this->exception($controller . ' class is not found!');
         }
@@ -474,7 +474,7 @@ class Router
      * Routes error function. (Closure)
      *
      * @param $callback
-     * 
+     *
      * @return void
      */
     public function error($callback)
@@ -486,10 +486,10 @@ class Router
      * Add new Route and it's settings
      *
      * @param $uri
-     * @param $method 
+     * @param $method
      * @param $callback
      * @param $settings
-     * 
+     *
      * @return void
      */
     private function addRoute($uri, $method, $callback, $settings)
@@ -523,11 +523,11 @@ class Router
                 ? $settings['name']
                 : null
             ),
-            'before' => (isset($settings['before']) 
+            'before' => (isset($settings['before'])
                 ? $settings['before']
                 : null
             ),
-            'after' => (isset($settings['after']) 
+            'after' => (isset($settings['after'])
                 ? $settings['after']
                 : null
             ),
@@ -556,9 +556,9 @@ class Router
     /**
      * Detect Routes Middleware; before or after
      *
-     * @param $middleware 
+     * @param $middleware
      * @param $type
-     * 
+     *
      * @return void
      */
     public function runRouteMiddleware($middleware, $type)
@@ -621,7 +621,7 @@ class Router
 
     /**
      * Throw new Exception for Router Error
-     * 
+     *
      * @param $message
      *
      * @return RouterException

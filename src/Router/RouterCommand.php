@@ -47,9 +47,9 @@ class RouterCommand
      * Run Route Middlewares
      *
      * @param $command
-     * @param $path 
+     * @param $path
      * @param $namespace
-     * 
+     *
      * @return mixed|void
      * @throws
      */
@@ -69,18 +69,18 @@ class RouterCommand
                 return $this->exception('handle() method is not found in <b>'.$command.'</b> class.');
             }
         }
-        
+
         return;
     }
 
     /**
      * Run Route Command; Controller or Closure
      *
-     * @param $command 
-     * @param $params 
-     * @param $path 
-     * @param $namespace 
-     * 
+     * @param $command
+     * @param $params
+     * @param $path
+     * @param $namespace
+     *
      * @return void
      * @throws
      */
@@ -99,13 +99,13 @@ class RouterCommand
                 );
                 return;
             }
- 
+
             return $this->exception($controllerMethod . ' method is not found in '.$controllerClass.' class.');
         } else {
             if (! is_null($params)) {
                 echo call_user_func_array($command, $params);
                 return;
-            } 
+            }
 
             echo call_user_func($command);
         }
@@ -114,10 +114,10 @@ class RouterCommand
     /**
      * Resolve Controller or Middleware class.
      *
-     * @param $class 
-     * @param $path 
-     * @param $namespace  
-     * 
+     * @param $class
+     * @param $path
+     * @param $namespace
+     *
      * @return object
      * @throws
      */
@@ -130,7 +130,7 @@ class RouterCommand
 
         require_once($file);
         $class = $namespace . str_replace('/', '\\', $class);
-        
+
         return new $class();
     }
 }
