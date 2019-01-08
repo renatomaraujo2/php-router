@@ -50,8 +50,45 @@ class RouterTest extends TestCase
         $response = $this->client->send($request);
     }
 
+    public function testGetControllerRoute()
+    {
+        $request = $this->client->createRequest('GET', 'http://localhost:5000/controllers');
+        $response = $this->client->send($request);
+
+        $this->assertSame('controller route', (string) $response->getBody());
+    }
+
     public function testInit()
     {
-        $this->assertInstanceOf('\Buki\Router', new Router());
+        $this->assertInstanceOf('\\Buki\\Router', new Router());
+    }
+
+    public function testGetRoutes()
+    {
+        $params = [
+            'paths' => [
+                'controllers' => 'controllers/',
+            ],
+            'namespaces' => [
+                'controllers' => 'Controllers\\',
+            ],
+            'base_folder' => __DIR__,
+            'main_method' => 'main',
+        ];
+        $router = new Router($params);
+
+        $router->get('/', function() {
+            return 'Hello World!';
+        });
+
+        $router->get('/controllers', 'TestController@main');
+
+        $routes = $router->getRoutes();
+
+        $this->assertCount(2, $routes);
+        $this->assertInstanceOf('\\Closure', $routes[0]['callback']);
+        $this->assertSame('TestController@main', $routes[1]['callback']);
+        $this->assertSame('GET', $routes[0]['method']);
+        $this->assertSame('GET', $routes[1]['method']);
     }
 }
