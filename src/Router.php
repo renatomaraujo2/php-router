@@ -13,6 +13,7 @@ namespace Buki;
 
 use Closure;
 use ReflectionMethod;
+use Exception;
 use Buki\Router\RouterRequest;
 use Buki\Router\RouterCommand;
 use Buki\Router\RouterException;
@@ -69,6 +70,16 @@ class Router
     protected $mainMethod = 'main';
 
     /**
+     * @var string $mainMethod Cache file
+     */
+    protected $cacheFile = null;
+
+    /**
+     * @var bool $cacheLoaded Cache is loaded?
+     */
+    protected $cacheLoaded = false;
+
+    /**
      * @var Closure $errorCallback Route error callback function
      */
     protected $errorCallback;
@@ -93,6 +104,7 @@ class Router
         }
 
         $this->setPaths($params);
+        $this->loadCache();
     }
 
     /**
@@ -135,6 +147,12 @@ class Router
         if (isset($params['main_method'])) {
             $this->mainMethod = $params['main_method'];
         }
+
+        if (isset($params['cache'])) {
+            $this->cacheFile = $params['cache'];
+        } else {
+            $this->cacheFile = realpath(__DIR__ . '/../cache.php');
+        }
     }
 
     /**
@@ -144,13 +162,17 @@ class Router
      * @param $method
      * @param $params
      *
-     * @return void
+     * @return mixed
      * @throws
      */
     public function __call($method, $params)
     {
+        if($this->cacheLoaded) {
+            return true;
+        }
+
         if (is_null($params)) {
-            return;
+            return false;
         }
 
         if (! in_array(strtoupper($method), explode('|', RouterRequest::$validMethods)) ) {
@@ -190,7 +212,8 @@ class Router
         } else {
             $this->addRoute($route, $method, $callback, $settings);
         }
-        return;
+
+        return true;
     }
 
     /**
@@ -201,10 +224,14 @@ class Router
      * @param array|string|closure $settings
      * @param string|closure $callback
      *
-     * @return void
+     * @return bool
      */
     public function add($methods, $route, $settings, $callback = null)
     {
+        if($this->cacheLoaded) {
+            return true;
+        }
+
         if (is_null($callback)) {
             $callback = $settings;
             $settings = null;
@@ -220,7 +247,7 @@ class Router
             call_user_func_array([$this, strtolower($methods)], [$route, $settings, $callback]);
         }
 
-        return;
+        return true;
     }
 
     /**
@@ -229,7 +256,7 @@ class Router
      * @param string|array $pattern
      * @param null|string $attr
      *
-     * @return void
+     * @return mixed
      * @throws
      */
     public function pattern($pattern, $attr = null)
@@ -250,7 +277,7 @@ class Router
             }
         }
 
-        return;
+        return true;
     }
 
     /**
@@ -354,10 +381,14 @@ class Router
      * @param closure|array $settings
      * @param null|closure $callback
      *
-     * @return void
+     * @return bool
      */
     public function group($name, $settings = null, $callback = null)
     {
+        if($this->cacheLoaded) {
+            return true;
+        }
+
         $groupName = trim($name, '/');
         $group = [];
         $group['route'] = '/' . $groupName;
@@ -406,6 +437,8 @@ class Router
         }
 
         $this->endGroup();
+
+        return true;
     }
 
     /**
@@ -415,11 +448,15 @@ class Router
      * @param string|array $settings
      * @param null|string $controller
      *
-     * @return void
+     * @return mixed
      * @throws
      */
     public function controller($route, $settings, $controller = null)
     {
+        if($this->cacheLoaded) {
+            return true;
+        }
+
         if (is_null($controller)) {
             $controller = $settings;
             $settings = [];
@@ -435,7 +472,7 @@ class Router
         }
 
         if (! class_exists($controller)) {
-            require($controllerFile);
+            require $controllerFile;
         }
 
         $controller = str_replace('/', '\\', $controller);
@@ -467,7 +504,7 @@ class Router
             unset($r);
         }
 
-        return;
+        return true;
     }
 
     /**
@@ -606,7 +643,7 @@ class Router
         echo '<pre style="font-size:15px;">';
         var_dump($this->getRoutes());
         echo '</pre>';
-        die();
+        die;
     }
 
     /**
@@ -640,5 +677,43 @@ class Router
     public function routerCommand()
     {
         return RouterCommand::getInstance();
+    }
+
+    /**
+     * Cache all routes
+     *
+     * @return bool
+     * @throws Exception
+     */
+    public function cache()
+    {
+        foreach($this->getRoutes() as $key => $r) {
+            if (!is_string($r['callback'])) {
+                throw new Exception(sprintf('Routes cannot contain a Closure/Function callback while caching.'));
+            }
+        }
+
+        $cacheContent = '<?php return '.var_export($this->getRoutes(), true).';' . PHP_EOL;
+        if (false === file_put_contents($this->cacheFile, $cacheContent)) {
+            throw new Exception(sprintf('Routes cache file could not be written.'));
+        }
+
+        return true;
+    }
+
+    /**
+     * Load Cache file
+     *
+     * @return bool
+     */
+    protected function loadCache()
+    {
+        if (file_exists($this->cacheFile)) {
+            $this->routes = require $this->cacheFile;
+            $this->cacheLoaded = true;
+            return true;
+        }
+
+        return false;
     }
 }
