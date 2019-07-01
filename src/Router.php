@@ -40,12 +40,17 @@ class Router
      */
     protected $patterns = [
         '{a}' => '([^/]+)',
-        '{d}' => '([0-9]+)',
-        '{i}' => '([0-9]+)',
-        '{s}' => '([a-zA-Z]+)',
-        '{w}' => '([a-zA-Z0-9_]+)',
-        '{u}' => '([a-zA-Z0-9_-]+)',
-        '{*}' => '(.*)'
+        '{d}' => '(\d+)',
+        '{i}' => '(\d+)',
+        '{s}' => '(\w+)',
+        '{u}' => '([\w\-_]+)',
+        '{*}' => '(.*)',
+        ':id' => '(\d+)',
+        ':number' => '(\d+)',
+        ':any' => '([^/]+)',
+        ':all' => '(.*)',
+        ':string' => '(\w+)',
+        ':slug' => '([\w\-_]+)',
     ];
 
     /**
@@ -188,7 +193,7 @@ class Router
             $callback = $params[2];
         }
 
-        if (strstr($route, '{')) {
+        if (strstr($route, ':') || strstr($route, '{')) {
             $route1 = $route2 = '';
             foreach (explode('/', $route) as $key => $value) {
                 if ($value != '') {
@@ -263,15 +268,15 @@ class Router
     {
         if (is_array($pattern)) {
             foreach ($pattern as $key => $value) {
-                if (! in_array('{' . $key . '}', array_keys($this->patterns))) {
-                    $this->patterns['{' . $key . '}'] = '(' . $value . ')';
+                if (! in_array($key, array_keys($this->patterns))) {
+                    $this->patterns[$key] = '(' . $value . ')';
                 } else {
                     return $this->exception($key . ' pattern cannot be changed.');
                 }
             }
         } else {
-            if (! in_array('{' . $pattern . '}', array_keys($this->patterns))) {
-                $this->patterns['{' . $pattern . '}'] = '(' . $attr . ')';
+            if (! in_array($pattern, array_keys($this->patterns))) {
+                $this->patterns[$pattern] = '(' . $attr . ')';
             } else {
                 return $this->exception($pattern . ' pattern cannot be changed.');
             }
@@ -327,7 +332,7 @@ class Router
             foreach ($this->routes as $data) {
                 $route = $data['route'];
 
-                if (strpos($route, '{') !== false) {
+                if (strstr($route, ':') !== false || strpos($route, '{') !== false) {
                     $route = str_replace($searches, $replaces, $route);
                 }
 
