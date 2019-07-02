@@ -468,6 +468,7 @@ class Router
         }
 
         $controller = str_replace(['\\', '.'], '/', $controller);
+        $controller = trim(preg_replace('/'.$this->paths['controllers'].'/i', '', $controller, 1), '/');
         $controllerFile = realpath(
             rtrim($this->paths['controllers'], '/') . '/' . $controller . '.php'
         );
@@ -493,14 +494,15 @@ class Router
                         }
                     }
 
-                    $methodVar = lcfirst(str_replace($method, '', $methodName));
+                    $methodVar = lcfirst(preg_replace('/'.$method.'/i', '', $methodName, 1));
+                    $methodVar = strtolower(preg_replace('%([a-z]|[0-9])([A-Z])%', '\1-\2', $methodVar));
                     $r = new ReflectionMethod($this->namespaces['controllers'] . $controller, $methodName);
                     $reqiredParam = $r->getNumberOfRequiredParameters();
                     $totalParam = $r->getNumberOfParameters();
 
                     $value = ($methodVar === $this->mainMethod ? $route : $route.'/'.$methodVar);
                     $this->{$method}(
-                        ($value.str_repeat('/{a}', $reqiredParam).str_repeat('/{a?}', $totalParam-$reqiredParam)),
+                        ($value.str_repeat('/:any', $reqiredParam).str_repeat('/:any?', $totalParam-$reqiredParam)),
                         $settings,
                         ($controller . '@' . $methodName)
                     );
