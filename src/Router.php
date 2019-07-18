@@ -468,7 +468,14 @@ class Router
         }
 
         $controller = str_replace(['\\', '.'], '/', $controller);
-        $controller = trim(preg_replace('/'.$this->paths['controllers'].'/i', '', $controller, 1), '/');
+        $controller = trim(
+            preg_replace(
+                '/'.str_replace('/', '\\/', $this->paths['controllers']).'/i',
+                '', $controller,
+                1
+            ),
+            '/'
+        );
         $controllerFile = realpath(
             rtrim($this->paths['controllers'], '/') . '/' . $controller . '.php'
         );
