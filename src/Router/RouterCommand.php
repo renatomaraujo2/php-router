@@ -63,7 +63,13 @@ class RouterCommand
             } elseif (is_string($command)) {
                 $controller = $this->resolveClass($command, $path, $namespace);
                 if (method_exists($controller, 'handle')) {
-                    return call_user_func([$controller, 'handle']);
+                    $response = call_user_func([$controller, 'handle']);
+                    if ($response !== true) {
+                        echo $response;
+                        exit;
+                    }
+
+                    return $response;
                 }
 
                 return $this->exception('handle() method is not found in <b>'.$command.'</b> class.');
