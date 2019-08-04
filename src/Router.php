@@ -467,29 +467,8 @@ class Router
             $settings = [];
         }
 
-        $controller = str_replace(['\\', '.'], '/', $controller);
-        $controller = trim(
-            preg_replace(
-                '/'.str_replace('/', '\\/', $this->paths['controllers']).'/i',
-                '', $controller,
-                1
-            ),
-            '/'
-        );
-        $controllerFile = realpath(
-            rtrim($this->paths['controllers'], '/') . '/' . $controller . '.php'
-        );
-
-        if (! file_exists($controllerFile)) {
-            return $this->exception($controller . ' class is not found!');
-        }
-
-        if (! class_exists($controller)) {
-            require $controllerFile;
-        }
-
-        $controller = str_replace('/', '\\', $controller);
-        $classMethods = get_class_methods($this->namespaces['controllers'] . $controller);
+        $controller = $this->resolveClass($controller);
+        $classMethods = get_class_methods($controller);
         if ($classMethods) {
             foreach ($classMethods as $methodName) {
                 if(!strstr($methodName, '__')) {
@@ -503,13 +482,22 @@ class Router
 
                     $methodVar = lcfirst(preg_replace('/'.$method.'/i', '', $methodName, 1));
                     $methodVar = strtolower(preg_replace('%([a-z]|[0-9])([A-Z])%', '\1-\2', $methodVar));
-                    $r = new ReflectionMethod($this->namespaces['controllers'] . $controller, $methodName);
-                    $reqiredParam = $r->getNumberOfRequiredParameters();
-                    $totalParam = $r->getNumberOfParameters();
+                    $r = new ReflectionMethod($controller, $methodName);
+                    $endpoints = [];
+                    foreach ($r->getParameters() as $param) {
+                        $pattern = ':any';
+                        $typeHint = $param->hasType() ? $param->getType()->getName() : null;
+                        if ($typeHint === 'int') {
+                            $pattern = ':id';
+                        } elseif ($typeHint === 'string') {
+                            $pattern = ':slug';
+                        }
+                        $endpoints[] = $param->isOptional() ? $pattern . '?' : $pattern;
+                    }
 
                     $value = ($methodVar === $this->mainMethod ? $route : $route.'/'.$methodVar);
                     $this->{$method}(
-                        ($value.str_repeat('/:any', $reqiredParam).str_repeat('/:any?', $totalParam-$reqiredParam)),
+                        ($value.'/'.implode('/', $endpoints)),
                         $settings,
                         ($controller . '@' . $methodName)
                     );
@@ -519,6 +507,36 @@ class Router
         }
 
         return true;
+    }
+
+    /**
+     * @param $controller
+     *
+     * @return RouterException|mixed
+     */
+    protected function resolveClass($controller)
+    {
+        $controller = str_replace(['\\', '.'], '/', $controller);
+        $controller = trim(
+            preg_replace(
+                '/'.str_replace('/', '\\/', $this->paths['controllers']).'/i',
+                '', $controller,
+                1
+            ),
+            '/'
+        );
+        $file = realpath(rtrim($this->paths['controllers'], '/') . '/' . $controller . '.php');
+
+        if (! file_exists($file)) {
+            return $this->exception($controller . ' class is not found!');
+        }
+
+        $controller = $this->namespaces['controllers'] . str_replace('/', '\\', $controller);
+        if (! class_exists($controller)) {
+            require $file;
+        }
+
+        return $controller;
     }
 
     /**
@@ -566,13 +584,18 @@ class Router
             $route .= '/';
         }
 
+        $routeName = is_string($callback)
+            ? strtolower(preg_replace(
+                '/[^\w]/i', '.', str_replace($this->namespaces['controllers'], '', $callback)
+              ))
+            : null;
         $data = [
             'route' => str_replace('//', '/', $route),
             'method' => strtoupper($method),
             'callback' => $callback,
             'name' => (isset($settings['name'])
                 ? $settings['name']
-                : null
+                : $routeName
             ),
             'before' => (isset($settings['before'])
                 ? $settings['before']
@@ -596,12 +619,7 @@ class Router
      */
     private function runRouteCommand($command, $params = null)
     {
-        $this->routerCommand()->runRoute(
-            $command,
-            $params,
-            $this->baseFolder . '/' . $this->paths['controllers'],
-            $this->namespaces['controllers']
-        );
+        $this->routerCommand()->runRoute($command, $params);
     }
 
     /**
@@ -614,25 +632,15 @@ class Router
      */
     public function runRouteMiddleware($middleware, $type)
     {
-        $middlewarePath = $this->baseFolder . '/' . $this->paths['middlewares'];
-        $middlewareNs = $this->namespaces['middlewares'];
-        if ($type == 'before') {
+        if ($type === 'before') {
             if (! is_null($middleware['group'])) {
-                $this->routerCommand()->beforeAfter(
-                    $middleware['group'][$type], $middlewarePath, $middlewareNs
-                );
+                $this->routerCommand()->beforeAfter($middleware['group'][$type]);
             }
-            $this->routerCommand()->beforeAfter(
-                $middleware[$type], $middlewarePath, $middlewareNs
-            );
+            $this->routerCommand()->beforeAfter($middleware[$type]);
         } else {
-            $this->routerCommand()->beforeAfter(
-                $middleware[$type], $middlewarePath, $middlewareNs
-            );
+            $this->routerCommand()->beforeAfter($middleware[$type]);
             if (! is_null($middleware['group'])) {
-                $this->routerCommand()->beforeAfter(
-                    $middleware['group'][$type], $middlewarePath, $middlewareNs
-                );
+                $this->routerCommand()->beforeAfter($middleware['group'][$type]);
             }
         }
     }
@@ -690,7 +698,7 @@ class Router
      */
     public function routerCommand()
     {
-        return RouterCommand::getInstance();
+        return RouterCommand::getInstance($this->baseFolder, $this->paths, $this->namespaces);
     }
 
     /**
