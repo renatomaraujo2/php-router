@@ -18,10 +18,28 @@ use Buki\Router\RouterRequest;
 use Buki\Router\RouterCommand;
 use Buki\Router\RouterException;
 
+/**
+ * Class Router
+ *
+ * @method mixed any($route, $settings, $callback = null)
+ * @method mixed get($route, $settings, $callback = null)
+ * @method mixed post($route, $settings, $callback = null)
+ * @method mixed put($route, $settings, $callback = null)
+ * @method mixed delete($route, $settings, $callback = null)
+ * @method mixed patch($route, $settings, $callback = null)
+ * @method mixed head($route, $settings, $callback = null)
+ * @method mixed options($route, $settings, $callback = null)
+ * @method mixed xpost($route, $settings, $callback = null)
+ * @method mixed xput($route, $settings, $callback = null)
+ * @method mixed xdelete($route, $settings, $callback = null)
+ * @method mixed xpatch($route, $settings, $callback = null)
+ *
+ * @package Buki
+ */
 class Router
 {
     /**
-     * @var string $baseFolder Pattern definations for parameters of Route
+     * @var string $baseFolder Pattern definitions for parameters of Route
      */
     protected $baseFolder;
 
@@ -36,7 +54,7 @@ class Router
     protected $groups = [];
 
     /**
-     * @var array $patterns Pattern definations for parameters of Route
+     * @var array $patterns Pattern definitions for parameters of Route
      */
     protected $patterns = [
         '{a}' => '([^/]+)',
@@ -122,27 +140,23 @@ class Router
     protected function setPaths($params)
     {
         if (isset($params['paths']) && $paths = $params['paths']) {
-            $this->paths['controllers']	=
-                isset($paths['controllers'])
-                    ? trim($paths['controllers'], '/')
-                    : $this->paths['controllers'];
+            $this->paths['controllers']	= isset($paths['controllers'])
+                ? trim($paths['controllers'], '/')
+                : $this->paths['controllers'];
 
-            $this->paths['middlewares']	=
-                isset($paths['middlewares'])
-                    ? trim($paths['middlewares'], '/')
-                    : $this->paths['middlewares'];
+            $this->paths['middlewares']	= isset($paths['middlewares'])
+                ? trim($paths['middlewares'], '/')
+                : $this->paths['middlewares'];
         }
 
         if (isset($params['namespaces']) && $namespaces = $params['namespaces']) {
-            $this->namespaces['controllers'] =
-                isset($namespaces['controllers'])
-                    ? trim($namespaces['controllers'], '\\') . '\\'
-                    : '';
+            $this->namespaces['controllers'] = isset($namespaces['controllers'])
+                ? trim($namespaces['controllers'], '\\') . '\\'
+                : '';
 
-            $this->namespaces['middlewares'] =
-                isset($namespaces['middlewares'])
-                    ? trim($namespaces['middlewares'], '\\') . '\\'
-                    : '';
+            $this->namespaces['middlewares'] = isset($namespaces['middlewares'])
+                ? trim($namespaces['middlewares'], '\\') . '\\'
+                : '';
         }
 
         if (isset($params['base_folder'])) {
@@ -331,7 +345,6 @@ class Router
         } else {
             foreach ($this->routes as $data) {
                 $route = $data['route'];
-
                 if (strstr($route, ':') !== false || strpos($route, '{') !== false) {
                     $route = str_replace($searches, $replaces, $route);
                 }
@@ -615,7 +628,7 @@ class Router
      *
      * @param $command
      * @param $params
-     * @return null
+     * @return void
      */
     private function runRouteCommand($command, $params = null)
     {

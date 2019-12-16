@@ -22,7 +22,11 @@ class RouterCommand
     protected $namespaces;
 
     /**
+     * RouterCommand constructor.
      *
+     * @param $baseFolder
+     * @param $paths
+     * @param $namespaces
      */
     public function __construct($baseFolder, $paths, $namespaces)
     {
@@ -48,9 +52,11 @@ class RouterCommand
     }
 
     /**
-     * Get class instance
+     * @param $baseFolder
+     * @param $paths
+     * @param $namespaces
      *
-     * @return RouterCommand
+     * @return RouterCommand|static
      */
     public static function getInstance($baseFolder, $paths, $namespaces)
     {
@@ -77,8 +83,6 @@ class RouterCommand
      * Run Route Middlewares
      *
      * @param $command
-     * @param $path
-     * @param $namespace
      *
      * @return mixed|void
      * @throws
@@ -88,13 +92,18 @@ class RouterCommand
         if (! is_null($command)) {
             $info = $this->getMiddlewareInfo();
             if (is_array($command)) {
-                foreach ($command as $key => $value) {
-                    $this->beforeAfter($value, $info['path'], $info['namespace']);
+                foreach ($command as $value) {
+                    $this->beforeAfter($value);
                 }
             } elseif (is_string($command)) {
-                $controller = $this->resolveClass($command, $info['path'], $info['namespace']);
+                $middleware = explode(':', $command);
+                $params = [];
+                if (count($middleware) > 1) {
+                    $params = explode(',', $middleware[1]);
+                }
+                $controller = $this->resolveClass($middleware[0], $info['path'], $info['namespace']);
                 if (method_exists($controller, 'handle')) {
-                    $response = call_user_func([$controller, 'handle']);
+                    $response = call_user_func_array([$controller, 'handle'], $params);
                     if ($response !== true) {
                         echo $response;
                         exit;
@@ -115,10 +124,8 @@ class RouterCommand
      *
      * @param $command
      * @param $params
-     * @param $path
-     * @param $namespace
      *
-     * @return void
+     * @return mixed|void
      * @throws
      */
     public function runRoute($command, $params = null)
@@ -131,22 +138,16 @@ class RouterCommand
 
             $controller = $this->resolveClass($controllerClass, $info['path'], $info['namespace']);
             if (method_exists($controller, $controllerMethod)) {
-                echo call_user_func_array(
-                    [$controller, $controllerMethod],
-                    (!is_null($params) ? $params : [])
-                );
+                echo $this->runMethodWithParams([$controller, $controllerMethod], $params);
                 return;
             }
 
             return $this->exception($controllerMethod . ' method is not found in '.$controllerClass.' class.');
         } else {
-            if (! is_null($params)) {
-                echo call_user_func_array($command, $params);
-                return;
-            }
-
-            echo call_user_func($command);
+            echo $this->runMethodWithParams($command, $params);
         }
+
+        return;
     }
 
     /**
@@ -172,5 +173,16 @@ class RouterCommand
         }
 
         return new $class();
+    }
+
+    /**
+     * @param $function
+     * @param $params
+     *
+     * @return mixed
+     */
+    protected function runMethodWithParams($function, $params)
+    {
+        return call_user_func_array($function, (!is_null($params) ? $params : []));
     }
 }
