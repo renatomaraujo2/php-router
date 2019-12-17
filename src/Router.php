@@ -500,10 +500,14 @@ class Router
                     foreach ($r->getParameters() as $param) {
                         $pattern = ':any';
                         $typeHint = $param->hasType() ? $param->getType()->getName() : null;
-                        if ($typeHint === 'int') {
+                        if (in_array($typeHint, ['int', 'bool'])) {
                             $pattern = ':id';
-                        } elseif ($typeHint === 'string') {
+                        } elseif (in_array($typeHint, ['string', 'float'])) {
                             $pattern = ':slug';
+                        } elseif ($typeHint === null) {
+                            $pattern = ':any';
+                        } else {
+                            continue;
                         }
                         $endpoints[] = $param->isOptional() ? $pattern . '?' : $pattern;
                     }
