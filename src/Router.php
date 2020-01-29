@@ -1,14 +1,12 @@
 <?php
-/*
-*
-* @ Package: Router - simple router class for php
-* @ Class: Router
-* @ Author: izni burak demirtas / @izniburak <info@burakdemirtas.org>
-* @ Web: http://burakdemirtas.org
-* @ URL: https://github.com/izniburak/php-router
-* @ Licence: The MIT License (MIT) - Copyright (c) - http://opensource.org/licenses/MIT
-*
-*/
+/**
+ * @Package: Router - simple router class for php
+ * @Class: Router
+ * @Author: izni burak demirtas / @izniburak <info@burakdemirtas.org>
+ * @Web: http://burakdemirtas.org
+ * @URL: https://github.com/izniburak/php-router
+ * @Licence: The MIT License (MIT) - Copyright (c) - http://opensource.org/licenses/MIT
+ */
 namespace Buki;
 
 use Closure;
@@ -38,6 +36,16 @@ use Buki\Router\RouterException;
  */
 class Router
 {
+    /**
+     * @var string
+     */
+    protected $documentRoot = '';
+
+    /**
+     * @var string
+     */
+    protected $runningPath = '';
+
     /**
      * @var string $baseFolder Pattern definitions for parameters of Route
      */
@@ -116,11 +124,9 @@ class Router
      */
     function __construct(array $params = [])
     {
-        $this->baseFolder = realpath(getcwd());
-
-        if (empty($params)) {
-            return;
-        }
+        $this->documentRoot = realpath($_SERVER['DOCUMENT_ROOT']);
+        $this->runningPath = realpath(getcwd());
+        $this->baseFolder = $this->runningPath;
 
         if (isset($params['debug']) && is_bool($params['debug'])) {
             RouterException::$debug = $params['debug'];
@@ -139,6 +145,10 @@ class Router
      */
     protected function setPaths($params)
     {
+        if (empty($params)) {
+            return;
+        }
+
         if (isset($params['paths']) && $paths = $params['paths']) {
             $this->paths['controllers']	= isset($paths['controllers'])
                 ? trim($paths['controllers'], '/')
@@ -167,11 +177,7 @@ class Router
             $this->mainMethod = $params['main_method'];
         }
 
-        if (isset($params['cache'])) {
-            $this->cacheFile = $params['cache'];
-        } else {
-            $this->cacheFile = realpath(__DIR__ . '/../cache.php');
-        }
+        $this->cacheFile = isset($params['cache']) ? $params['cache'] : realpath(__DIR__ . '/../cache.php');
     }
 
     /**
@@ -258,7 +264,7 @@ class Router
 
         if (strstr($methods, '|')) {
             foreach (array_unique(explode('|', $methods)) as $method) {
-                if ($method != '') {
+                if (!empty($method)) {
                     call_user_func_array([$this, strtolower($method)], [$route, $settings, $callback]);
                 }
             }
@@ -282,18 +288,16 @@ class Router
     {
         if (is_array($pattern)) {
             foreach ($pattern as $key => $value) {
-                if (! in_array($key, array_keys($this->patterns))) {
-                    $this->patterns[$key] = '(' . $value . ')';
-                } else {
+                if (in_array($key, array_keys($this->patterns))) {
                     return $this->exception($key . ' pattern cannot be changed.');
                 }
+                $this->patterns[$key] = '(' . $value . ')';
             }
         } else {
-            if (! in_array($pattern, array_keys($this->patterns))) {
-                $this->patterns[$pattern] = '(' . $attr . ')';
-            } else {
+            if (in_array($pattern, array_keys($this->patterns))) {
                 return $this->exception($pattern . ' pattern cannot be changed.');
             }
+            $this->patterns[$pattern] = '(' . $attr . ')';
         }
 
         return true;
@@ -307,11 +311,9 @@ class Router
      */
     public function run()
     {
-        $documentRoot = realpath($_SERVER['DOCUMENT_ROOT']);
-        $getCwd = realpath(getcwd());
-
-        $base = str_replace('\\', '/', str_replace($documentRoot, '', $getCwd) . '/');
+        $base = str_replace('\\', '/', str_replace($this->documentRoot, '', $this->runningPath) . '/');
         $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+        $uri = str_replace(dirname($_SERVER['PHP_SELF']), '', $uri);
 
         if (($base !== $uri) && (substr($uri, -1) === '/')) {
             $uri = substr($uri, 0, (strlen($uri)-1));
@@ -326,21 +328,19 @@ class Router
         $replaces = array_values($this->patterns);
         $foundRoute = false;
 
-        $routes = [];
-        foreach ($this->routes as $data) {
-            array_push($routes, $data['route']);
-        }
+        $routes = array_column($this->routes, 'route');
 
         // check if route is defined without regex
-        if (in_array($uri, array_values($routes))) {
-            foreach ($this->routes as $data) {
-                if (RouterRequest::validMethod($data['method'], $method) && ($data['route'] === $uri)) {
-                    $foundRoute = true;
-                    $this->runRouteMiddleware($data, 'before');
-                    $this->runRouteCommand($data['callback']);
-                    $this->runRouteMiddleware($data, 'after');
-                    break;
-                }
+        if (in_array($uri, $routes)) {
+            $currentRoute = array_filter($this->routes, function($r) use ($method, $uri) {
+                return RouterRequest::validMethod($r['method'], $method) && $r['route'] === $uri;
+            });
+            if (!empty($currentRoute)) {
+                $currentRoute = current($currentRoute);
+                $foundRoute = true;
+                $this->runRouteMiddleware($currentRoute, 'before');
+                $this->runRouteCommand($currentRoute['callback']);
+                $this->runRouteMiddleware($currentRoute, 'after');
             }
         } else {
             foreach ($this->routes as $data) {
@@ -356,17 +356,9 @@ class Router
                         $this->runRouteMiddleware($data, 'before');
 
                         array_shift($matched);
-                        $newMatched = [];
-                        foreach ($matched as $key => $value) {
-                            if (strstr($value, '/')) {
-                                foreach (explode('/', $value) as $k => $v) {
-                                    $newMatched[] = trim(urldecode($v));
-                                }
-                            } else {
-                                $newMatched[] = trim(urldecode($value));
-                            }
-                        }
-                        $matched = $newMatched;
+                        $matched = array_map(function($value) {
+                            return trim(urldecode($value));
+                        }, $matched);
 
                         $this->runRouteCommand($data['callback'], $matched);
                         $this->runRouteMiddleware($data, 'after');
@@ -384,7 +376,7 @@ class Router
         if ($foundRoute === false) {
             if (! $this->errorCallback) {
                 $this->errorCallback = function() {
-                    header($_SERVER['SERVER_PROTOCOL']." 404 Not Found");
+                    header($_SERVER['SERVER_PROTOCOL'] . ' 404 Not Found');
                     return $this->exception('Route not found. Looks like something went wrong. Please try again.');
                 };
             }
@@ -588,23 +580,24 @@ class Router
             }
         }
 
-        $page = dirname($_SERVER['PHP_SELF']);
-        $page = $page === '/' ? '' : $page;
-        if (strstr($page, 'index.php')) {
-            $data = implode('/', explode('/', $page));
-            $page = str_replace($data, '', $page);
+        $path = dirname($_SERVER['PHP_SELF']);
+        $path = $path === '/' || strpos($this->runningPath, $path) !== 0 ? '' : $path;
+
+        if (strstr($path, 'index.php')) {
+            $data = implode('/', explode('/', $path));
+            $path = str_replace($data, '', $path);
         }
 
-        $route = $page . $group . '/' . trim($uri, '/');
+        $route = $path . $group . '/' . trim($uri, '/');
         $route = rtrim($route, '/');
-        if ($route === $page) {
+        if ($route === $path) {
             $route .= '/';
         }
 
         $routeName = is_string($callback)
             ? strtolower(preg_replace(
                 '/[^\w]/i', '.', str_replace($this->namespaces['controllers'], '', $callback)
-              ))
+            ))
             : null;
         $data = [
             'route' => str_replace('//', '/', $route),
