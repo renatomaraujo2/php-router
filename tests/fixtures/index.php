@@ -21,6 +21,6 @@ $router->get('/', function() {
     return 'Hello World!';
 });
 
-$router->get('/controllers', 'TestController@main');
+$router->get('/controller', 'TestController@main');
 
 $router->run();

@@ -35,7 +35,7 @@ class RouterTest extends TestCase
 
     public function testGetIndexRoute()
     {
-        $request = $this->client->createRequest('GET', 'http://localhost:5000/');
+        $request = $this->client->createRequest('GET', 'http://localhost/tests/fixtures/');
         $response = $this->client->send($request);
 
         $this->assertSame('Hello World!', (string) $response->getBody());
@@ -46,13 +46,13 @@ class RouterTest extends TestCase
      */
     public function testGetNotFoundRoute()
     {
-        $request = $this->client->createRequest('GET', 'http://localhost:5000/not/found');
+        $request = $this->client->createRequest('GET', 'http://localhost/tests/fixtures/not/found');
         $response = $this->client->send($request);
     }
 
     public function testGetControllerRoute()
     {
-        $request = $this->client->createRequest('GET', 'http://localhost:5000/controllers');
+        $request = $this->client->createRequest('GET', 'http://localhost/tests/fixtures/controller');
         $response = $this->client->send($request);
 
         $this->assertSame('controller route', (string) $response->getBody());
