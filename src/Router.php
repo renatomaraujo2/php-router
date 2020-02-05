@@ -396,7 +396,9 @@ class Router
     {
         $base = str_replace('\\', '/', str_replace($this->documentRoot, '', $this->runningPath));
         $uri = rtrim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/');
-        $uri = str_replace(dirname($_SERVER['PHP_SELF']), '', $uri);
+        if ($_SERVER['REQUEST_URI'] !== $_SERVER['PHP_SELF']) {
+            $uri = str_replace(dirname($_SERVER['PHP_SELF']), '', $uri);
+        }
 
         if (($base !== $uri) && (substr($uri, -1) === '/')) {
             $uri = substr($uri, 0, (strlen($uri) - 1));
