@@ -394,8 +394,8 @@ class Router
      */
     public function run()
     {
-        $base = str_replace('\\', '/', str_replace($this->documentRoot, '', $this->runningPath) . '/');
-        $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+        $base = str_replace('\\', '/', str_replace($this->documentRoot, '', $this->runningPath));
+        $uri = rtrim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/');
         $uri = str_replace(dirname($_SERVER['PHP_SELF']), '', $uri);
 
         if (($base !== $uri) && (substr($uri, -1) === '/')) {
