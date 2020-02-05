@@ -20,18 +20,18 @@ use ReflectionMethod;
 /**
  * Class Router
  *
- * @method mixed any($route, $settings, $callback = null)
- * @method mixed get($route, $settings, $callback = null)
- * @method mixed post($route, $settings, $callback = null)
- * @method mixed put($route, $settings, $callback = null)
- * @method mixed delete($route, $settings, $callback = null)
- * @method mixed patch($route, $settings, $callback = null)
- * @method mixed head($route, $settings, $callback = null)
- * @method mixed options($route, $settings, $callback = null)
- * @method mixed xpost($route, $settings, $callback = null)
- * @method mixed xput($route, $settings, $callback = null)
- * @method mixed xdelete($route, $settings, $callback = null)
- * @method mixed xpatch($route, $settings, $callback = null)
+ * @method $this any($route, $settings, $callback = null)
+ * @method $this get($route, $settings, $callback = null)
+ * @method $this post($route, $settings, $callback = null)
+ * @method $this put($route, $settings, $callback = null)
+ * @method $this delete($route, $settings, $callback = null)
+ * @method $this patch($route, $settings, $callback = null)
+ * @method $this head($route, $settings, $callback = null)
+ * @method $this options($route, $settings, $callback = null)
+ * @method $this xpost($route, $settings, $callback = null)
+ * @method $this xput($route, $settings, $callback = null)
+ * @method $this xdelete($route, $settings, $callback = null)
+ * @method $this xpatch($route, $settings, $callback = null)
  *
  * @package Buki
  */
@@ -66,12 +66,6 @@ class Router
      * @var array $patterns Pattern definitions for parameters of Route
      */
     protected $patterns = [
-        '{a}' => '([^/]+)',
-        '{d}' => '(\d+)',
-        '{i}' => '(\d+)',
-        '{s}' => '(\w+)',
-        '{u}' => '([\w\-_]+)',
-        '{*}' => '(.*)',
         ':id' => '(\d+)',
         ':number' => '(\d+)',
         ':any' => '([^/]+)',
@@ -102,7 +96,7 @@ class Router
     protected $mainMethod = 'main';
 
     /**
-     * @var string $mainMethod Cache file
+     * @var string $cacheFile Cache file
      */
     protected $cacheFile = null;
 
@@ -117,13 +111,28 @@ class Router
     protected $errorCallback;
 
     /**
+     * @var array $middlewares General middlewares for per request
+     */
+    protected $middlewares = [];
+
+    /**
+     * @var array $routeMiddlewares Route middlewares
+     */
+    protected $routeMiddlewares = [];
+
+    /**
+     * @var array $middlewareGroups Middleware Groups
+     */
+    protected $middlewareGroups = [];
+
+    /**
      * Router constructor method.
      *
      * @param array $params
      *
      * @return void
      */
-    function __construct(array $params = [])
+    public function __construct(array $params = [])
     {
         $this->documentRoot = realpath($_SERVER['DOCUMENT_ROOT']);
         $this->runningPath = realpath(getcwd());
@@ -135,6 +144,123 @@ class Router
 
         $this->setPaths($params);
         $this->loadCache();
+    }
+
+    /**
+     * [TODO] This method implementation not completed yet.
+     *
+     * Set route middleware
+     *
+     * @param string|array $middleware
+     * @param string $type
+     *
+     * @return $this
+     */
+    public function middleware($middleware, $type = 'before')
+    {
+        if (!is_array($middleware) && !is_string($middleware)) {
+            return $this;
+        }
+
+        $currentRoute = end($this->routes);
+        $currentRoute[$type] = $middleware;
+        array_pop($this->routes);
+        array_push($this->routes, $currentRoute);
+
+        return $this;
+    }
+
+    /**
+     * [TODO] This method implementation not completed yet.
+     *
+     * @param string|array $middleware
+     *
+     * @return $this
+     */
+    public function middlewareBefore($middleware)
+    {
+        $this->middleware($middleware, 'before');
+
+        return $this;
+    }
+
+    /**
+     * [TODO] This method implementation not completed yet.
+     *
+     * @param string|array $middleware
+     *
+     * @return $this
+     */
+    public function middlewareAfter($middleware)
+    {
+        $this->middleware($middleware, 'after');
+
+        return $this;
+    }
+
+    /**
+     * [TODO] This method implementation not completed yet.
+     *
+     * Set route name
+     *
+     * @param string $name
+     *
+     * @return $this
+     */
+    public function name($name)
+    {
+        if (!is_string($name)) {
+            return $this;
+        }
+
+        $currentRoute = end($this->routes);
+        $currentRoute['name'] = $name;
+        array_pop($this->routes);
+        array_push($this->routes, $currentRoute);
+
+        return $this;
+    }
+
+    /**
+     * [TODO] This method implementation not completed yet.
+     *
+     * Set general middlewares
+     *
+     * @param array $middlewares
+     *
+     * @return void
+     */
+    public function setMiddleware(array $middlewares)
+    {
+        $this->middlewares = $middlewares;
+    }
+
+    /**
+     * [TODO] This method implementation not completed yet.
+     *
+     * Set Route middlewares
+     *
+     * @param array $middlewares
+     *
+     * @return void
+     */
+    public function setRouteMiddleware(array $middlewares)
+    {
+        $this->routeMiddlewares = $middlewares;
+    }
+
+    /**
+     * [TODO] This method implementation not completed yet.
+     *
+     * Set middleware groups
+     *
+     * @param array $middlewareGroup
+     *
+     * @return void
+     */
+    public function setMiddlewareGroup(array $middlewareGroup)
+    {
+        $this->middlewareGroups = $middlewareGroup;
     }
 
     /**
@@ -170,7 +296,7 @@ class Router
             $callback = $params[2];
         }
 
-        if (strstr($route, ':') || strstr($route, '{')) {
+        if (strstr($route, ':')) {
             $route1 = $route2 = '';
             foreach (explode('/', $route) as $key => $value) {
                 if ($value != '') {
@@ -195,7 +321,7 @@ class Router
             $this->addRoute($route, $method, $callback, $settings);
         }
 
-        return true;
+        return $this;
     }
 
     /**
@@ -276,10 +402,7 @@ class Router
             $uri = substr($uri, 0, (strlen($uri) - 1));
         }
 
-        if ($uri === '') {
-            $uri = '/';
-        }
-
+        $uri = $this->clearRouteName($uri);
         $method = RouterRequest::getRequestMethod();
         $searches = array_keys($this->patterns);
         $replaces = array_values($this->patterns);
@@ -302,7 +425,7 @@ class Router
         } else {
             foreach ($this->routes as $data) {
                 $route = $data['route'];
-                if (strstr($route, ':') !== false || strpos($route, '{') !== false) {
+                if (strstr($route, ':') !== false) {
                     $route = str_replace($searches, $replaces, $route);
                 }
 
@@ -356,16 +479,15 @@ class Router
             return true;
         }
 
-        $groupName = trim($name, '/');
         $group = [];
-        $group['route'] = '/' . $groupName;
+        $group['route'] = $this->clearRouteName($name);
         $group['before'] = $group['after'] = null;
 
         if (is_null($callback)) {
             $callback = $settings;
         } else {
-            $group['before'][] = (!isset($settings['before']) ? null : $settings['before']);
-            $group['after'][] = (!isset($settings['after']) ? null : $settings['after']);
+            $group['before'][] = !isset($settings['before']) ? null : $settings['before'];
+            $group['after'][] = !isset($settings['after']) ? null : $settings['after'];
         }
 
         $groupCount = count($this->groups);
@@ -434,7 +556,7 @@ class Router
         if ($classMethods) {
             foreach ($classMethods as $methodName) {
                 if (!strstr($methodName, '__')) {
-                    $method = "any";
+                    $method = 'any';
                     foreach (explode('|', RouterRequest::$validMethods) as $m) {
                         if (stripos($methodName, strtolower($m), 0) === 0) {
                             $method = strtolower($m);
@@ -517,7 +639,7 @@ class Router
      */
     public function getList()
     {
-        echo '<pre style="font-size:15px;">';
+        echo '<pre>';
         var_dump($this->getRoutes());
         echo '</pre>';
         die;
@@ -708,22 +830,13 @@ class Router
             ))
             : null;
         $data = [
-            'route' => str_replace('//', '/', $route),
+            'route' => $this->clearRouteName($route),
             'method' => strtoupper($method),
             'callback' => $callback,
-            'name' => (isset($settings['name'])
-                ? $settings['name']
-                : $routeName
-            ),
-            'before' => (isset($settings['before'])
-                ? $settings['before']
-                : null
-            ),
-            'after' => (isset($settings['after'])
-                ? $settings['after']
-                : null
-            ),
-            'group' => ($groupItem === -1) ? null : $this->groups[$groupItem],
+            'name' => isset($settings['name']) ? $settings['name'] : $routeName,
+            'before' => isset($settings['before']) ? $settings['before'] : null,
+            'after' => isset($settings['after']) ? $settings['after'] : null,
+            'group' => $groupItem === -1 ? null : $this->groups[$groupItem],
         ];
         array_push($this->routes, $data);
     }
@@ -749,5 +862,16 @@ class Router
     private function endGroup()
     {
         array_pop($this->groups);
+    }
+
+    /**
+     * @param string $route
+     *
+     * @return string
+     */
+    private function clearRouteName($route = '')
+    {
+        $route = trim(str_replace('//', '/', $route), '/');
+        return $route === '' ? '/' : "/{$route}";
     }
 }
